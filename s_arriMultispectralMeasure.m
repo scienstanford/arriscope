@@ -31,12 +31,22 @@ st.verify;
 project = st.lookup('arriscope/ARRIScope Tissue'); 
 thisSession  = project.sessions.findOne('label="20190222"');
 A = thisSession.acquisitions();
-zipInfo = A{1}.getFileZipInfo('Bone_CameraImage_ari.zip');
-entryName = zipInfo.members{1};
+
+stPrint(zipInfo.members,'path')
+
+zipArchive = 'Bone_CameraImage_ari.zip';
+zipInfo = A{1}.getFileZipInfo(zipArchive);
+
+entryName = zipInfo.members{1}.path;
+entryName = zipInfo.members{6}.path;
 outName = fullfile(arriRootPath,'local',entryName);
+A{1}.downloadFileZipMember(zipArchive,entryName,outName);
 
 % Working directory
-chdir(fullfile(icalRootPath,'local'));
+chdir(fullfile(arriRootPath,'local'));
+[arriRGB,arriRaw] = arriRead(outName);
+
+% ieNewGraphWin; imagescRGB(arriRGB)
 
 %% Get data from an acquisition for one of the channels
 % Select the light with spectra and camera images that we want to analyze
