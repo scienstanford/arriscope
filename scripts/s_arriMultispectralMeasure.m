@@ -32,21 +32,85 @@ project = st.lookup('arriscope/ARRIScope Tissue');
 thisSession  = project.sessions.findOne('label="20190222"');
 A = thisSession.acquisitions();
 
-stPrint(zipInfo.members,'path')
-
+%{
 zipArchive = 'Bone_CameraImage_ari.zip';
 zipInfo = A{1}.getFileZipInfo(zipArchive);
+stPrint(zipInfo.members,'path')
 
 entryName = zipInfo.members{1}.path;
 entryName = zipInfo.members{6}.path;
 outName = fullfile(arriRootPath,'local',entryName);
 A{1}.downloadFileZipMember(zipArchive,entryName,outName);
+%}
 
+% Download the whole zip file of data, unzip it.
+zipArchive = 'Bone_CameraImage_ari.zip';
+arriZipFile = A{1}.getFile(zipArchive);
+arriZipFile.download(zipArchive);
+unzip(zipArchive);
+disp('Downloaded and unzipped spd data');
+
+%%  Get the rect somehow
+%{
+% If you read an arriRGB, you can get the rect this way
+ip = ipCreate;
+ip = ipSet(ip,'display output',arriRGB);
+ipWindow(ip);
+% Pick a little region to use to get the other values
+[~,rect] = ieROISelect(ip);
+%}
+
+rect = [158   332   205   215];
+
+%%
 % Working directory
 chdir(fullfile(arriRootPath,'local'));
-[arriRGB,arriRaw] = arriRead(outName);
+localFiles = dir('Bone*.ari');
+nFiles = length(localFiles);
+% These are the set of possible lights defined in the function
 
-% ieNewGraphWin; imagescRGB(arriRGB)
+
+lightNames = arriLights;
+nLights = length(lightNames);
+rgbRectImages = zeros(nLights,rect(4)+1,rect(3)+1,3);
+lightNames  = cell(nFiles,1);
+lightLevels = cell(nFiles,1);
+rgbRectMeans = zeros(nLights,3);
+
+for ii=1:length(localFiles)
+    [lightNames{ii}, lightLevels{ii}] = arriLightLevel(localFiles(ii).name);
+    arriRGB = arriRead(localFiles(ii).name);
+    [~,idx] = arriLights(lightNames{ii});
+    tmp = imcrop(arriRGB,rect);
+    rgbRectImages(idx,:,:,:) = tmp;
+    rgbRectMeans(idx,:) = mean(RGB2XWFormat(tmp))';
+end
+
+%% Put the arriRaw into a sensor structure
+sensor = sensorCreate;
+
+[~, arriRaw] = arriRead(localFiles(ii).name);
+arriRaw = ieScale(double(arriRaw),0,1);
+sensor = sensorSet(sensor,'volts',arriRaw);
+sensorWindow(sensor);
+ip = ipCreate;
+ip = ipCompute(ip,sensor);
+ipWindow(ip);
+
+
+
+
+
+roiData = imcrop(arriRGB,rect);
+rgbData = RGB2XWFormat(roiData);
+ieNewGraphWin; 
+c = {'r','g','b'};
+for ii=1:3
+   histogram(RGB2XWFormat(rgbData(:,ii)),500,'FaceColor',c{ii});
+   hold on
+end
+   
+meanRGB = mean(RGB2XWFormat(roiData))';
 
 %% Get data from an acquisition for one of the channels
 % Select the light with spectra and camera images that we want to analyze
