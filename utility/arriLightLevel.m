@@ -1,7 +1,10 @@
 function [lightName,lightLevel] =arriLightLevel(fileName)
 % Figure out which light and which level from the file name
 %
+% JEF/Wandell
+%
 % See also
+%   s_arriFilesMetadataCreate
 %
 
 % Get the possible light names

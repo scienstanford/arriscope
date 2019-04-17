@@ -1,11 +1,14 @@
 %% s_arriMultiSpectralMeasure.m
 %
 % Purpose: Jared made measurements stored in Arriscope Tissue from
-% cadaver data.  This routine specifies a Session and Acquisition,
-% reads the relevant Arri data files, and returns a set of 18 values
-% for the RGB sensors under the 5 lights and the 
-%   Red, Green, Blue, violet, white (with NIR filter on)
-%       and infrared (with NIR filter off)
+% cadaver data.  This routine 
+%
+%   Specifies a Session and Acquisition
+%   Specifies a rect (see s_arriROISelect)
+%   Reads the relevant Arri camera files
+%   Returns a set of 18 values for the RGB sensors under the 5 lights 
+%      Red, Green, Blue, violet, white (with NIR filter on)
+%      Infrared (with NIR filter off)
 %
 % Background:
 %
@@ -13,11 +16,15 @@
 %   1. Download the data from the Flywheel database
 %   2. unzip the data into a local directory
 %   3. 
+%
 % Download and estimate homogeneity (linearity with respect to intensity)
 % Documentation and results of this analysis are in 
 % https://docs.google.com/document/d/1O_KHnzWTAt7flg8k9T0OvyRQ-bFjVbCBAMM4wdbU1O0/edit#heading=h.ows9qdbadce7
-
+%
 % BW/JEF  SCIENSTANFORD, 2019
+%
+% See also
+%
 
 %% Set root path for Matlab
 % 
@@ -27,49 +34,31 @@
 st = scitran('stanfordlabs');
 st.verify;
 
-% Find the project and the first calibration session
 project = st.lookup('arriscope/ARRIScope Tissue'); 
-thisSession  = project.sessions.findOne('label="20190222"');
-A = thisSession.acquisitions();
 
-%{
+%% Find the session and acquisition of interest
+
+thisSession  = project.sessions.findOne('label="20190412"');
+thisAcq      = thisSession.acquisitions.findOne('label=Bone');
+
+%% Download the whole zip file of data, unzip it.
+chdir(fullfile(arriRootPath,'local'));
+
 zipArchive = 'Bone_CameraImage_ari.zip';
-zipInfo = A{1}.getFileZipInfo(zipArchive);
-stPrint(zipInfo.members,'path')
-
-entryName = zipInfo.members{1}.path;
-entryName = zipInfo.members{6}.path;
-outName = fullfile(arriRootPath,'local',entryName);
-A{1}.downloadFileZipMember(zipArchive,entryName,outName);
-%}
-
-% Download the whole zip file of data, unzip it.
-zipArchive = 'Bone_CameraImage_ari.zip';
-arriZipFile = A{1}.getFile(zipArchive);
+arriZipFile = thisAcq.getFile(zipArchive);
 arriZipFile.download(zipArchive);
-unzip(zipArchive);
+unzip(zipArchive,thisAcq.label);
 disp('Downloaded and unzipped spd data');
 
-%%  Get the rect somehow
-%{
-% If you read an arriRGB, you can get the rect this way
-ip = ipCreate;
-ip = ipSet(ip,'display output',arriRGB);
-ipWindow(ip);
-% Pick a little region to use to get the other values
-[~,rect] = ieROISelect(ip);
-%}
 
-rect = [158   332   205   215];
 
 %%
 % Working directory
 chdir(fullfile(arriRootPath,'local'));
 localFiles = dir('Bone*.ari');
 nFiles = length(localFiles);
+
 % These are the set of possible lights defined in the function
-
-
 lightNames = arriLights;
 nLights = length(lightNames);
 rgbRectImages = zeros(nLights,rect(4)+1,rect(3)+1,3);
