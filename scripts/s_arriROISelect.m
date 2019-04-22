@@ -1,4 +1,6 @@
-%% Download a single arriRGB image and choose an ROI
+%% s_arriGetMeanRGB
+%
+% Download a single arriRGB image and choose an ROI
 %
 % We will then use this ROI to select out data from all the other images in
 % another script.
@@ -8,7 +10,8 @@
 % See also
 %  s_arriMultispectralMeasure
 %
-
+%%
+ieInit;
 %% Open up to the data on Flywheel
 st = scitran('stanfordlabs');
 st.verify;
@@ -26,13 +29,14 @@ disp(thisAcq.label)
 % Choose the ari zip file with the images
 files    = thisAcq.files;
 zipFile = stSelect(files,'name','Bone_CameraImage_ari.zip');
+zipArchive = 'Bone_CameraImage_ari.zip';
 
 % Find out the filenames in the zip archive
 zipInfo = thisAcq.getFileZipInfo(zipFile{1}.name);
 stPrint(zipInfo.members,'path')
 
 % Download one that you like
-entryName = zipInfo.members{1}.path;
+entryName = zipInfo.members{8}.path;
 outName = fullfile(arriRootPath,'local',entryName);
 thisAcq.downloadFileZipMember(zipArchive,entryName,outName);
 
