@@ -1,5 +1,5 @@
 %% s_arriGetMeanRGBvalues.m
-
+%
 % Purpose: Jared made measurements stored in Arriscope Tissue from
 % cadaver data.  This routine 
 %
@@ -34,10 +34,7 @@
 %
 % TODO:
 %   create a warning for saturated pixel values
-%   save a file with matrix containing 
-%       metadata and data
-%       name of camera image, rect, mean and sdev of pixel values
-%   improve histogram plots
+
 
 %% initialize
 ieInit;
@@ -75,15 +72,13 @@ arriZipFile.download(zipArchive);
 unzip(zipArchive,thisAcq.label);
 disp('Downloaded and unzipped spd data');
 
-%%
+%% Read the arri image and select the rect 
 
 % Select the file that will be used to determine rect (image captured with ARRI white
 entryName = zipInfo.members{1}.path;
 outName = fullfile(arriRootPath,'local',thisAcq.label,entryName);
 % thisAcq.downloadFileZipMember(zipArchive,entryName,outName);
 
-
-%% Read the arri image and select the rect 
 % This rect should have pixels that are not saturated 
 % The rect will be used to grab pixels in all other images of the same
 % specimen under different lighting conditions
@@ -98,33 +93,63 @@ ipWindow(ip);
 [~,rect] = ieROISelect(ip);
 
 disp(rect)
+% thisRect = ieROIDraw(rect);
 
 %% Use rect for selecting the mean RGB values 
 % We selected a region (rect) that does not have saturated pixel values
 % We assume that this area will not be saturated for the same specimen under different lights
 
-meanRGB = zeros(8,3);
-for ii = 1: length(zipInfo.members)
+nFiles  = length(zipInfo.members);
+meanRGB = zeros(nFiles,3);
+stdRGB  = zeros(nFiles,3);
+ip = ipCreate;
+
+% Histogram window
+
+for ii = 1:nFiles
     entryName = zipInfo.members{ii}.path;
     outName = fullfile(arriRootPath,'local',thisAcq.label,entryName);
     thisAcq.downloadFileZipMember(zipArchive,entryName,outName);
     arriRGB = arriRead(outName);
-    ip = ipCreate;
     ip = ipSet(ip,'display output',arriRGB);
+    ip = ipSet(ip,'name',entryName);
     ipWindow(ip);
     roiData = imcrop(arriRGB,rect);
     rgbData = RGB2XWFormat(roiData);
-    ieNewGraphWin;
+    
     c = {'r','g','b'};
+    ieNewGraphWin;
     for jj=1:3
-        histogram(RGB2XWFormat(rgbData(:,jj)),500,'FaceColor',c{jj});
+        histogram(RGB2XWFormat(rgbData(:,jj)),500,'FaceColor',c{jj},'EdgeColor',c{jj});
         hold on
     end
+    xlabel('Value'); ylabel('Count'); title(entryName)
+    
     % display the rectangular region
     [shapeHandle,ax] = ieROIDraw('ip','shape','rect','shape data',rect);
-%     delete(shapeHandle);
-    meanRGB(ii,:) = mean(RGB2XWFormat(roiData))';
+    % delete(shapeHandle);
+    xwData = RGB2XWFormat(roiData);
+    meanRGB(ii,:) = mean(xwData)';
+    stdRGB(ii,:)  = std(xwData)';
 end
 
+%% Save out the data from all the measurements from a given speciment
+%
+% To save:
+%  meanRGB, stdev of pixel values
+%  thisAcq
+%  zipInfo, which contains the file names
+%  rect
 
+% To find the acquisition you can use
+%{
+  tst = st.lookup(sprintf('arriscope/ARRIScope Tissue/%s/%s/%s',...
+    thisSession.subject.label,thisSession.label,thisAcq.label));
+%}
+sessionLabel = thisSession.label;
+acquisitionLabel  = thisAcq.label;
+fileOrder = stPrint(zipInfo.members,'path');
+outFile = fullfile(arriRootPath,'local',sprintf('%s-%s',sessionLabel,acquisitionLabel));
+save(outFile, 'meanRGB','stdRGB','acquisitionLabel','sessionLabel','fileOrder','rect');
 
+%%
