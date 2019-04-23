@@ -36,13 +36,13 @@
 %   create a warning for saturated pixel values
 
 
-%% initialize
+%% initialize ISET
 ieInit;
+%% Open up to the data on Flywheel
 % the first time you connect to Flywheel 
 %       see https://github.com/vistalab/scitran/wiki/Connecting-and-Authentication 
 %           if you have done this and cannot run the section below
 %               try getting out of Matlab and opening again
-%% Open up to the data on Flywheel
 st = scitran('stanfordlabs');
 st.verify;
 
@@ -123,7 +123,7 @@ for ii = 1:nFiles
         histogram(RGB2XWFormat(rgbData(:,jj)),500,'FaceColor',c{jj},'EdgeColor',c{jj});
         hold on
     end
-    xlabel('Value'); ylabel('Count'); title(entryName)
+    xlabel('Value'); ylabel('Count'); title(strrep(entryName,'_',' '))
     
     % display the rectangular region
     [shapeHandle,ax] = ieROIDraw('ip','shape','rect','shape data',rect);
