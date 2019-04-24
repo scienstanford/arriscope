@@ -123,7 +123,8 @@ for ii = 1:nFiles
         histogram(RGB2XWFormat(rgbData(:,jj)),500,'FaceColor',c{jj},'EdgeColor',c{jj});
         hold on
     end
-    xlabel('Value'); ylabel('Count'); title(strrep(entryName,'_',' '))
+    xlabel('Value','fontsize',16); ylabel('Count','fontsize',16); 
+    title(strrep(entryName,'_',' '),'fontsize',16,'fontweight','normal');
     
     % display the rectangular region
     [shapeHandle,ax] = ieROIDraw('ip','shape','rect','shape data',rect);
