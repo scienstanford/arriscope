@@ -78,6 +78,8 @@ end
 %% Put the arriRaw into a sensor structure
 sensor = sensorCreate;
 
+% We now can read and crop at the same time, just from left/right
+% Update this section of the code
 [~, arriRaw] = arriRead(localFiles(ii).name);
 arriRaw = ieScale(double(arriRaw),0,1);
 sensor = sensorSet(sensor,'volts',arriRaw);
@@ -85,10 +87,6 @@ sensorWindow(sensor);
 ip = ipCreate;
 ip = ipCompute(ip,sensor);
 ipWindow(ip);
-
-
-
-
 
 roiData = imcrop(arriRGB,rect);
 rgbData = RGB2XWFormat(roiData);
@@ -103,7 +101,6 @@ meanRGB = mean(RGB2XWFormat(roiData))';
 
 %% Get data from an acquisition for one of the channels
 % Select the light with spectra and camera images that we want to analyze
-
 
 channel = 'Red';   % 'Red','Green','Blue','UV','White', 'Infrared'
 str     = sprintf('label=%s',channel);

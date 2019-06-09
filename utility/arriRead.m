@@ -1,17 +1,37 @@
-function [ariRGB, ariRaw] = arriRead( fileName )
+function [ariRGB, ariRaw] = arriRead( fileName, varargin )
 % Read an ARRIScope file (.ari) and convert into various RGB and RAW formats
 % 
 % Syntax:
 %   [ariRGB, ariRaw] = arriRead(FILENAME) 
 %
+% Brief description:
+%   This is an interface to the low level reading routine for the ARRI
+%   image data.  The default reads out both the left and right images as a
+%   single RGB image.  The images are left/right in the image, but the
+%   orientation of the images does not match the left/right disparity  of
+%   the stereo cameras in the microscope.
+%
+%   Using the 'image' switch the user can have the images returned so that
+%   the left and right images are oriented with horizontal disparity shown
+%   correctly.  You can request either the stereo pair in a returned
+%   struct, or just the left or right image.
+%
 % Inputs
 %  FILENAME - string
 %
 % Optional key/value pairs
-%  None yet
+%  'crop'  -  Crop the images with the specified rectangle.  
+%             Matlab image rect is [xmin, ymin, width, height], which is
+%             the same as [smallestCol, smallestRow, nCols, nRows]
+%
+%  'image' - Specify type of returned image.  
+%     'raw'             - the combined left/right raw image (default)
+%     'left' or 'right' - one of the stereo images
+%     'stereo'          - struct with both the left and right images.
 %
 % Outputs
-%   ariRGB  - Combined RGB data into a single variable
+%   ariRGB  - Combined RGB data into a single image, or if 'pair' is set to
+%             true then a struct, ariRGB.left and ariRGB.right;
 %   ariRaw  - Output from imReadASAri, which reads the .ari file and packs
 %             the 12 bit data in that file into 16 bit values
 %
@@ -19,18 +39,25 @@ function [ariRGB, ariRaw] = arriRead( fileName )
 %    Julian Klabes - 04/21/2017
 %
 % NOTE:
-%   The histogram showing the number of pixels at different levels seems to
-%   be oddly regular, with high-low-high-low ordering when the data are
-%   near the noise. Perhaps this because we are packing 12-bit data into 16
-%   bit bins.
+%   The histogram showing the number of pixels at different response levels
+%   is irregular, with certain values containing a lot of pixels and
+%   adjacent values containing none. We think this because the read routine
+%   packs 12-bit data into 16 bit bins, and thus certain values never
+%   arise.
 %
 % See also
-%    
+%    Scripts with s_arri*
+%
 
 %% Check the file exists
+varargin = ieParamFormat(varargin);
 p = inputParser;
 p.addRequired('fileName',@(x)(exist(x,'file')));
-p.parse(fileName);
+
+vFunc = @(x)(ismember(x,{'stereo','left','right','raw'}));
+p.addParameter('image','raw',vFunc);    % Specify return image type
+p.addParameter('crop',[],@isvector);
+p.parse(fileName,varargin{:});
 
 % Check that the file is an arriscope file
 [~,~,e] = fileparts(fileName);
@@ -41,9 +68,43 @@ end
 %% Call the functions below    
 [R,G,B,ariRaw] = ari2RGB(fileName);
 
+% This is the left right data in a single RGB images
 ariRGB = cat(3,R,G,B);
+cols = size(ariRGB,2);
+
+returnType = p.Results.image;
+
+% User wants the data in left/right stereo pair format
+switch ieParamFormat(returnType)
+    case 'stereo'
+        % User wants the left and right images aligned and separated
+        left  = imrotate(ariRGB(:, 1:(cols/2), :),-90);
+        right = imrotate(ariRGB(:, ((cols/2)+1):end, :),90);
+        clear ariRGB;
+        ariRGB.left  = left;
+        ariRGB.right = right;
+    case 'left'
+        ariRGB  = imrotate(ariRGB(:, 1:(cols/2), :), -90);
+    case 'right'
+        ariRGB = imrotate(ariRGB(:, ((cols/2)+1):end, :), 90);
+    case 'raw'
+        % Do nothing
+end
+
+% User sent in a rect for cropping
+if ~isempty(p.Results.crop)
+    rect = p.Results.crop;
+    if isstruct(ariRGB)
+        ariRGB.left = imcrop(ariRGB.left,rect);
+        ariRGB.right = imcrop(ariRGB.right,rect);
+    else
+        ariRGB = imcrop(ariRGB,rect);
+    end
+end
+
 
 end
+
 
 % --------- Main functions ------------
 function [R,G,B,ariRaw] = ari2RGB(fn)
