@@ -1,33 +1,43 @@
 %% s_ARRIsensorsPublished.m
-
+%
 % Wisotzky et al 2019 published spectral sensitivities of the red, green
-% and blue sensors, so we used grabit to get the data and create a sensor
-% called arriSensorNIRon.mat for the ARRI Sensor with NIR blocking filter on
+% and blue sensors. We used grabit to get the data and create a sensor
+% called arriSensorNIRon.mat for the ARRI Sensor with NIR blocking filter
+% on
+
+%% Read the grabit data from the Wisotzky data
 
 chdir(fullfile(arriRootPath,'data','sensor')) 
-
-load('arriPublishedSensors','BlueARRIsensor')
 wave = 380:1:700;
-blue = interp1(BlueARRIsensor(:,1),BlueARRIsensor(:,2),wave);
+
+load('grabit/arriWisotzsky','BlueARRIsensor')
+% Make sure the values are unique
+[thisW,ia] = unique(BlueARRIsensor(:,1));
+thisS = BlueARRIsensor(ia,2);
+blue = interp1(thisW,thisS,wave);
 blue = ieClip(blue,0,1);
 ieNewGraphWin;
-plot(wave,blue);
+plot(wave,blue); grid on;
 
-load('arriPublishedSensors','GreenARRIsensor')
-wave = 380:1:700;
-green = interp1(GreenARRIsensor(:,1),GreenARRIsensor(:,2),wave);
+load('grabit/arriWisotzsky','GreenARRIsensor')
+[thisW,ia] = unique(GreenARRIsensor(:,1));
+thisS = GreenARRIsensor(ia,2);
+green = interp1(thisW,thisS,wave);
 green = ieClip(green,0,1);
 ieNewGraphWin;
 plot(wave,green);
 
-load('arriPublishedSensors','RedARRIsensor')
-wave = 380:1:700;
-red = interp1(RedARRIsensor(:,1),RedARRIsensor(:,2),wave);
+load('grabit/arriWisotzsky','RedARRIsensor')
+[thisW,ia] = unique(RedARRIsensor(:,1));
+thisS = RedARRIsensor(ia,2);
+red = interp1(thisW,thisS,wave);
 red = ieClip(red,0,1);
 ieNewGraphWin;
 plot(wave,red);
 
-%% Save the ARRI sensor with the NIR filter
+%% Save the ARRI sensor with the NIR filter included
+%
+
 chdir(fullfile(arriRootPath,'data','sensor')) 
 inData.wavelength = wave;
 inData.data = [red(:), green(:), blue(:)];
@@ -36,41 +46,52 @@ inData.filterNames = {'rArri','gArri','bArri'};
 arriSensorFile = fullfile(arriRootPath,'data','sensor','arriSensorNIRon.mat');
 ieSaveColorFilter(inData,arriSensorFile)
 
-%%
+%% Estimate the ARRI without the NIR filter
+%
 % We do not have the spectral sensitivities of the red, green and blue
 % sensors without the NIR blocking filter.  However, the general shape of
 % the spectral sensitivities of the curves published by Wisotsky et l 2019
-% look very much like the SONY Exmor IMX224 Color CMOS sensor with gain adjustments
-% So we will use the spectral curves of the SONY Exmor IMX224 without NIR
-% blocking filter as a good approximation, and just apply a gain to do the
-% fit to the curves published by Wisotsky et al - and we will call the
-% sensor arriSensorNIRoff.mat for the arriSensor with NIR off
-% JEF used grabit to get the data for the spectral curves for a SONY Exmor
-% IMX224 without NIR from
+% look very much like the SONY Exmor IMX224 Color CMOS sensor with gain
+% adjustments.
+%
+%
 %   https://www.altairastro.com/Altair-GPCAMV2-IMX224-Colour-Guide-Planetary-Camera.html
+%
+% We use the spectral curves of the SONY Exmor IMX224 without NIR blocking
+% filter as an approximation. The sensor gains may have to be fit to the
+% curves published by Wisotsky et al - and we will call the sensor
+% arriSensorNIRoff.mat for the arriSensor with NIR off JEF used grabit to
+% get the data for the spectral curves for a SONY Exmor IMX224 without NIR
+% from the link, above.
 
-load('SonyExmorIMX224','Blue_AS1224MC')
+% Read the grabit data
 wave = 400:1:1000;
-blue = interp1(Blue_AS1224MC(:,1),Blue_AS1224MC(:,2),wave);
+load('grabit/SonyExmorIMX224','Blue_AS1224MC')
+[thisW,ia] = unique(Blue_AS1224MC(:,1));
+thisS = Blue_AS1224MC(ia,2);
+blue = interp1(thisW,thisS,wave);
 blue = ieClip(blue,0,1);
 ieNewGraphWin;
 plot(wave,blue);
 
-load('SonyExmorIMX224','Green_AS1224MC')
-wave = 400:1:1000;
-green = interp1(Green_AS1224MC(:,1),Green_AS1224MC(:,2),wave);
+load('grabit/SonyExmorIMX224','Green_AS1224MC')
+[thisW,ia] = unique(Green_AS1224MC(:,1));
+thisS = Green_AS1224MC(ia,2);
+green = interp1(thisW,thisS,wave);
 green = ieClip(green,0,1);
 ieNewGraphWin;
 plot(wave,green);
 
-load('SonyExmorIMX224','Red_AS1224MC')
-wave = 400:1:1000;
-red = interp1(Red_AS1224MC(:,1),Red_AS1224MC(:,2),wave);
+load('grabit/SonyExmorIMX224','Red_AS1224MC')
+[thisW,ia] = unique(Red_AS1224MC(:,1));
+thisS = Red_AS1224MC(ia,2);
+red = interp1(thisW,thisS,wave);
 red = ieClip(red,0,1);
 ieNewGraphWin;
 plot(wave,red);
 
-%% Save the ARRI sensor with the NIR filter
+%% Save the ARRI sensor without the NIR filter
+
 chdir(fullfile(arriRootPath,'data','sensor')) 
 inData.wavelength = wave;
 inData.data = [red(:), green(:), blue(:)];
@@ -78,3 +99,5 @@ inData.comment = 'Curves for SONY Exmor IMX224 on the web and scanned by JEF. Th
 inData.filterNames = {'rArri','gArri','bArri'};
 arriSensorFile = fullfile(arriRootPath,'data','sensor','arriSensorNIRoff.mat');
 ieSaveColorFilter(inData,arriSensorFile)
+
+%% END
