@@ -105,12 +105,14 @@ files = dir('*.ari');
 nFiles = numel(files);
 multispecData = zeros(nCols+1,nRows+1,3,nFiles);
 
+clear info
 for ii=1:nFiles
     img = arriRead(files(ii).name,...
         'image','left', ...
         'crop',rect);
-    figure; imagescRGB(img);
-    title(sprintf('%s',files(ii).name));
+    [info.lightName{ii}, info.lightLevel{ii}, info.irFilter{ii}] = arriLightLevel(files(ii).name);
+    % figure; imagescRGB(img);
+    % title(sprintf('%s',files(ii).name));
     multispecData(:,:,:,ii) = img; 
 end
 imagescRGB(multispecData(:,:,:,2));
@@ -120,6 +122,56 @@ imagescRGB(multispecData(:,:,:,2));
 rgb = sum(multispecData,4);
 ieNewGraphWin;
 imagescRGB(rgb);
+
+%% Make a model of the light sensitivity in each of the 3x7 entries
+%
+% Each one is an RGB channel times a light
+%
+
+wave= 400:10:900;
+sensorFile = 'arriSensorNIRon';
+channelSensitivitiesOn = ieReadSpectra(sensorFile,wave);
+% ieNewGraphWin; plot(wave,channelSensitivitiesOn);
+
+sensorFile = 'arriSensorNIRoff';
+channelSensitivitiesOff = ieReadSpectra(sensorFile,wave);
+% ieNewGraphWin; plot(wave,channelSensitivitiesOff);
+
+lightFile = 'arriLights';
+[lightEmissions ,wave, comment] = ieReadSpectra(lightFile,wave);
+% ieNewGraphWin; plot(wave,lightEmissions);
+
+%%
+lightNames = comment.lightNames;
+allChannels = zeros(size(multispecData,3),size(multispecData,4),numel(wave));
+for ii=1:size(multispecData,4)
+    
+    % Choose the appropriate sensors
+    switch info.irFilter{ii}
+        case 'on'
+            thisSensor = channelSensitivitiesOn;
+        case 'off'
+            thisSensor = channelSensitivitiesOff;
+    end
+    
+    % Choose the light
+    [tf,idx] = ismember(info.lightName{ii},lightNames);
+    thisLight = lightEmissions(:,idx);
+    
+    % Calculate the light times the sensor and store as the channel
+    for jj=1:3
+        allChannels(jj,ii,:) = (thisLight .* thisSensor(:,jj));
+    end
+end
+
+%% There are NaNs in these data
+foo = RGB2XWFormat(allChannels);
+ieNewGraphWin;
+plot(wave,foo);
+
+s = svd(foo);
+ieNewGraphWin; plot(s);
+grid on
 
 
 

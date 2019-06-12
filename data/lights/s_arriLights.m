@@ -12,22 +12,23 @@ blue      = ieReadSpectra('blueSonyLight',wave);
 violet    = ieReadSpectra('violetSonyLight',wave);
 green     = ieReadSpectra('greenSonyLight',wave);
 red       = ieReadSpectra('redSonyLight',wave);
-whiteSony = ieReadSpectra('whiteSonyLight',wave);
-whiteARRI = ieReadSpectra('whiteARRILight',wave);
+white     = ieReadSpectra('whiteSonyLight',wave);
+arriwhite = ieReadSpectra('whiteARRILight',wave);
 ir        = ieReadSpectra('irSonyLight',wave);
 
-%%
-lights = [red(:),green(:),blue(:),violet(:),whiteSony(:),whiteARRI(:),ir(:)];
-comment = 'Light order:  red, green, blue, violet, whiteSony, whiteARRI, IR. ';
-comment = addText(comment,'Measured with the PR 715 and need to be corrected.');
+%% whiteSony and whitemix are the same
+
+lightSpectra = [violet(:),blue(:),green(:),red(:),white(:),arriwhite(:),ir(:)];
+
+% A list of all the lights
+comment.lightNames = arriLights;
+comment.description = 'Measured with the PR 715 and need to be corrected.';
 lightFileName = fullfile(arriRootPath,'data','lights','arriLights.mat');
-ieSaveSpectralFile(wave,lights,comment,lightFileName);
+ieSaveSpectralFile(wave,lightSpectra,comment,lightFileName);
 
 ieNewGraphWin;
-plot(wave,lights);
-legend({'red','green','blue','violet','whiteSony','whiteARRI','IR'});
-xlabel('Wavelength (nm)');
-ylabel('Energy (watts/sr/nm/m^2');
-grid on
+plot(wave,lightSpectra);
+legend(arriLights);
+xlabel('Wavelength (nm)'); ylabel('Energy (watts/sr/nm/m^2'); grid on
 
 %% END
