@@ -11,7 +11,11 @@ sensor = ieReadSpectra('arriSensorNIRon.mat',wave);
 % Read the light
 % greenSonyLight
 % blueSonyLight
-light = ieReadSpectra('blueSonyLight.mat',wave);
+% whiteSonyLight.mat
+% redSonyLight.mat
+% greenSonyLight.mat
+% whiteARRILight.mat
+light = ieReadSpectra('whiteARRILight.mat',wave);
 
 % Load the macbeth reflectances
 surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
@@ -57,11 +61,13 @@ arriZipFile.download(zipArchive);
 unzip(zipArchive,thisAcq.label);
 disp('Downloaded and unzipped arri image data');
 
-%% For the green light
-
+%% For the light
 % 'MacbethCc_green17_fIRon.ari'
 % 'MacbethCc_blue17_fIRon.ari'
-img = arriRead('MacbethCc_blue17_fIRon.ari','image','left');
+% 'MacbethCc_white17_fIRon.ari'
+% 'MacbethCc_red17_fIRon.ari'
+% 'MacbethCc_green17_fIRon.ari'
+img = arriRead('MacbethCc_arriwhite20_fIRon.ari','image','left');
 ieNewGraphWin;
 imagescRGB(img);
 
@@ -101,6 +107,8 @@ for ii=1:3
 end
 
 grid on;
-
+title('ARRI MCC image data captured under White light (ARRI)')
+xlabel('Measured');
+ylabel('Predicted');
 %%
 
