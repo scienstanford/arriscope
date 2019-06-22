@@ -47,19 +47,30 @@ thisAcq = thisSession.acquisitions.findOne('label=MacbethIRON');
 
 %% We removed the spaces from the file names
 
-files    = thisAcq.files;
-zipFile = stSelect(files,'name','MacbethIRON_ari.zip');
-zipArchive = 'MacbethIRON_ari.zip';
-
-% Find out the filenames in the zip archive
-zipInfo = thisAcq.getFileZipInfo(zipFile{1}.name);
-stPrint(zipInfo.members,'path')
-
+% Not necessary for the download.  We just want to be here.
 chdir(fullfile(arriRootPath,'local'));
-arriZipFile = thisAcq.getFile(zipArchive);
-arriZipFile.download(zipArchive);
+
+% Find the files in this acquisition
+files   = thisAcq.files;
+
+% Select the file you want to download
+zipFile = stSelect(files,'name','MacbethIRON_ari.zip');
+
+% Download the file
+st.fileDownload(zipFile{1},'destination',fullfile(arriRootPath,'local','MacbethIRON_ari.zip'));
+
+% It was a zip file and here we unzip it
 unzip(zipArchive,thisAcq.label);
 disp('Downloaded and unzipped arri image data');
+
+
+% zipArchive = 'MacbethIRON_ari.zip';
+% Find out the filenames in the zip archive
+% zipInfo = thisAcq.getFileZipInfo(zipFile{1}.name);
+% stPrint(zipInfo.members,'path')
+% arriZipFile = thisAcq.getFile(zipArchive);
+% arriZipFile.download(zipArchive);
+
 
 %% For the light
 % 'MacbethCc_green17_fIRon.ari'
@@ -67,6 +78,8 @@ disp('Downloaded and unzipped arri image data');
 % 'MacbethCc_white17_fIRon.ari'
 % 'MacbethCc_red17_fIRon.ari'
 % 'MacbethCc_green17_fIRon.ari'
+chdir(fullfile(arriRootPath,'local','MacbethIRON'));
+
 img = arriRead('MacbethCc_arriwhite20_fIRon.ari','image','left');
 ieNewGraphWin;
 imagescRGB(img);
