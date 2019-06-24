@@ -5,7 +5,7 @@
 %% Set up the actors
 
 % Load the sensor
-wave = 400:5:800;
+wave = 400:10:700;
 
 % Load the macbeth reflectances
 surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
@@ -68,6 +68,11 @@ chdir(fullfile(arriRootPath,'local','MacbethIRON'));
 rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
     'MacbethCc_red17_fIRon.ari', 'MacbethCc_violet17_fIRon.ari', ...
     'MacbethCc_white17_fIRon.ari','MacbethCc_arriwhite20_fIRon.ari'};
+
+ip = ipCreate;
+ip = ipSet(ip,'correction method illuminant','none');
+ip = ipSet(ip,'conversion method sensor','none');
+
 %{
  img = arriRead(rgbImages{end},'image','left');
  ieNewGraphWin;
@@ -76,9 +81,6 @@ rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
 
 %{
 % Make the display look right for the blue case.  What's going on?
- ip = ipCreate;
- ip = ipSet(ip,'correction method illuminant','none');
- ip = ipSet(ip,'conversion method sensor','none');
  img = arriRead(rgbImages{end},'image','left');
  img = imresize(img,1/4);
  ip = ipSet(ip,'result',img);
@@ -131,7 +133,104 @@ for ii=1:3
     identityLine;
 end
 
+%% Set up a set of low frequency basis functions for the sensor
+
+% Gaussian type:
+cfType = 'gaussian'; 
+wavelength = 400:10:700; 
+cPos       = 400:50:700; 
+width      = ones(size(cPos))*30;
+
+cFilters = sensorColorFilter(cfType, wavelength, cPos, width);
+%{
+ieNewGraphWin;
+plot(wavelength,cFilters);
+%}
+
+% Basic equation
+% 
+%   wgts*cFilters'*radiance = mRGB(:,ii)'
+%   theseData = mRGB(:,ii)';
+%   projectedData = cFilters'*radiance;
+%
+%   wgts = theseData\projectedData
+%   thisFilter = wgts*cFilters'
+%
+% So
+
+estimatedFilters = zeros(length(wave),3);
+colorList1 = {'r-','g-','b-'};
+colorList2 = {'ro','go','bo'};
+for ii = 1:3
+    ieNewGraphWin([],'tall');
+    theseData = mRGB(:,ii)';
+    projectedData = cFilters'*radiance;
+    wgts = theseData/projectedData;
+    thisFilter = wgts*cFilters';
+    thisFilter = ieClip(thisFilter,0,[]);  % Force positive
+    pred = thisFilter*radiance;
+    subplot(2,1,1); plot(wave,thisFilter,colorList1{ii});
+    subplot(2,1,2); plot(pred(:),theseData(:),colorList2{ii})
+    identityLine;
+    estimatedFilters(:,ii) = thisFilter(:);
+end
+estimatedFilters = ieScale(estimatedFilters,1);
+
 %%
+arriSensor = ieReadSpectra('arriSensorNIRon.mat',wave);
+ieNewGraphWin;
+arriSensor = ieScale(arriSensor,1);
+plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
+legend({'web','web','web','estimated','estimated','estimated'})
+
+%% Leave the red alone but make green and blue max relative to red
+arriMax = max(arriSensor);
+estMax = max(estimatedFilters);
+arriSensorScaled = arriSensor*diag([1,estMax(2)/arriMax(2),estMax(3)/arriMax(3)]);
+ieNewGraphWin;
+plot(wave,arriSensorScaled);
+
+arriScaledPredRGB = arriSensorScaled'*radiance;
+arriScaledPredRGB = arriScaledPredRGB';
+ieNewGraphWin;
+for ii=1:3
+    plot(ieScale(arriScaledPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+    hold on;
+end
+identityLine;
+
+%%
+estimatedFiltersRGB = estimatedFilters'*radiance;
+estimatedFiltersRGB = estimatedFiltersRGB';
+ieNewGraphWin;
+for ii=1:3
+    plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+    hold on;
+end
+identityLine;
+
+%% CVX format
+%
+% Ask Henryk for some help with this.
+%
+%{
+nWave = numel(wave);
+% Differentiator for forcing a smooth solution
+Z = - eye(nWave);
+for ii = 1 : nWave-1, Z(ii, ii + 1) = 1; end
+Z = Z(1:end-1,:);
+
+n = nWave;
+
+ii = 1;
+
+cvx_begin quiet
+  variable w(n)
+  minimize(norm(Z*w, 2))
+  subject to
+    w' * radiance == mRGB(:,ii)'
+cvx_end
+%}
 
 %%
 img = XW2RGBFormat(mRGB,4,6);
