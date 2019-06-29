@@ -5,46 +5,91 @@
 % called arriSensorNIRon.mat for the ARRI Sensor with NIR blocking filter
 % on
 
-%% Read the grabit data from the Wisotzky data
+%% Read in the TLCI sensor
+% The European Broadcase Union (EBU) created a "Standard Camera Model" as part of their TLCI-2012 (Television Lighting Consistency Index)
+% see https://www.ibc.org/download?ac=3920
+% Since engineers from ARRI played a role in developing this standard,
+% let's see if it is a good model for the ARRI Alexa sensor that is in the
+% ARRIScope
 
+% read the grabit data 
 chdir(fullfile(arriRootPath,'data','sensor')) 
 wave = 380:1:700;
-
-load('grabit/arriWisotzsky','BlueARRIsensor')
+load('grabit/arriSensorTLCI-2012' ,'blueARRIsensor');
 % Make sure the values are unique
-[thisW,ia] = unique(BlueARRIsensor(:,1));
-thisS = BlueARRIsensor(ia,2);
+[thisW,ia] = unique(blueARRIsensor(:,1));
+thisS = blueARRIsensor(ia,2);
 blue = interp1(thisW,thisS,wave,'pchip',0);
 blue = ieClip(blue,0,1);
 ieNewGraphWin;
-plot(wave,blue); grid on;
+plot(wave,blue,'b'); grid on;
+hold on;
 
-load('grabit/arriWisotzsky','GreenARRIsensor')
-[thisW,ia] = unique(GreenARRIsensor(:,1));
-thisS = GreenARRIsensor(ia,2);
+load('grabit/arriSensorTLCI-2012','greenARRIsensor')
+[thisW,ia] = unique(greenARRIsensor(:,1));
+thisS = greenARRIsensor(ia,2);
 green = interp1(thisW,thisS,wave,'pchip',0);
 green = ieClip(green,0,1);
-ieNewGraphWin;
-plot(wave,green);
+plot(wave,green,'g');
 
-load('grabit/arriWisotzsky','RedARRIsensor')
-[thisW,ia] = unique(RedARRIsensor(:,1));
-thisS = RedARRIsensor(ia,2);
+load('grabit/arriSensorTLCI-2012','redARRIsensor')
+[thisW,ia] = unique(redARRIsensor(:,1));
+thisS = redARRIsensor(ia,2);
 red = interp1(thisW,thisS,wave,'pchip',0);
 red = ieClip(red,0,1);
-ieNewGraphWin;
-plot(wave,red);
+plot(wave,red,'r');
+
+
+%% Read the grabit data from the Wisotzky data
+% We see that the arriWisotzsky sensor does not predict the RGB values we
+% captured for the MCC under different lights.
+% chdir(fullfile(arriRootPath,'data','sensor')) 
+% wave = 380:1:700;
+% 
+% load('grabit/arriWisotzsky','BlueARRIsensor')
+% % Make sure the values are unique
+% [thisW,ia] = unique(BlueARRIsensor(:,1));
+% thisS = BlueARRIsensor(ia,2);
+% blue = interp1(thisW,thisS,wave,'pchip',0);
+% blue = ieClip(blue,0,1);
+% ieNewGraphWin;
+% plot(wave,blue); grid on;
+% 
+% load('grabit/arriWisotzsky','GreenARRIsensor')
+% [thisW,ia] = unique(GreenARRIsensor(:,1));
+% thisS = GreenARRIsensor(ia,2);
+% green = interp1(thisW,thisS,wave,'pchip',0);
+% green = ieClip(green,0,1);
+% ieNewGraphWin;
+% plot(wave,green);
+% 
+% load('grabit/arriWisotzsky','RedARRIsensor')
+% [thisW,ia] = unique(RedARRIsensor(:,1));
+% thisS = RedARRIsensor(ia,2);
+% red = interp1(thisW,thisS,wave,'pchip',0);
+% red = ieClip(red,0,1);
+% ieNewGraphWin;
+% plot(wave,red);
 
 %% Save the ARRI sensor with the NIR filter included
 %
-
 chdir(fullfile(arriRootPath,'data','sensor')) 
 inData.wavelength = wave;
 inData.data = [red(:), green(:), blue(:)];
-inData.comment = 'Scanned from paper by Wistosky Et al 2019 titled Interactive and Multimodal-based Augmented Reality for Remote Assistance using a Digital Surgical Microscope(Figure 5) by JEF.  These have the NIR filter.';
+inData.comment = 'Scanned from documentation for the TLCI-2012 model of a Standard Camera.  These have the NIR filter.';
 inData.filterNames = {'rArri','gArri','bArri'};
 arriSensorFile = fullfile(arriRootPath,'data','sensor','arriSensorNIRon.mat');
 ieSaveColorFilter(inData,arriSensorFile)
+% 
+% chdir(fullfile(arriRootPath,'data','sensor')) 
+% inData.wavelength = wave;
+% inData.data = [red(:), green(:), blue(:)];
+% inData.comment = 'Scanned from paper by Wistosky Et al 2019 titled Interactive and Multimodal-based Augmented Reality for Remote Assistance using a Digital Surgical Microscope(Figure 5) by JEF.  These have the NIR filter.';
+% inData.filterNames = {'rArri','gArri','bArri'};
+% arriSensorFile = fullfile(arriRootPath,'data','sensor','arriSensorNIRon.mat');
+% ieSaveColorFilter(inData,arriSensorFile)
+
+
 
 %{
 wave = 400:10:700;

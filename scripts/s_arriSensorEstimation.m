@@ -54,7 +54,8 @@ chdir(fullfile(arriRootPath,'local'));
 zipFile = stSelect(files,'name','MacbethIRON_ari.zip');
 
 % Download the file
-st.fileDownload(zipFile{1},'destination',fullfile(arriRootPath,'local','MacbethIRON_ari.zip'));
+zipArchive = fullfile(arriRootPath,'local','MacbethIRON_ari.zip');
+st.fileDownload(zipFile{1},'destination',zipArchive);
 
 % It was a zip file and here we unzip it
 unzip(zipArchive,thisAcq.label);
@@ -113,7 +114,7 @@ ieNewGraphWin;
 plot(mRGB);
 
 %% Perform the ridge regression
-
+% This did not produce a good result
 %{
 k = 1e-3:1e-1:5e-1;
 redSensor = ridge(red(:),radiance',k);
@@ -121,17 +122,17 @@ ieNewGraphWin;
 plot(wave,redSensor);
 %}
 
-colorList1 = {'r-','g-','b-'};
-colorList2 = {'ro','go','bo'};
-for ii=1:3
-    ieNewGraphWin([],'tall');
-    theseData = mRGB(:,ii);
-    [thisSensor, err, res] = lsqnonneg(radiance',theseData(:));
-    pred = thisSensor'*radiance;
-    subplot(2,1,1); plot(wave,thisSensor,colorList1{ii});
-    subplot(2,1,2); plot(pred(:),theseData(:),colorList2{ii})
-    identityLine;
-end
+% colorList1 = {'r-','g-','b-'};
+% colorList2 = {'ro','go','bo'};
+% for ii=1:3
+%     ieNewGraphWin([],'tall');
+%     theseData = mRGB(:,ii);
+%     [thisSensor, err, res] = lsqnonneg(radiance',theseData(:));
+%     pred = thisSensor'*radiance;
+%     subplot(2,1,1); plot(wave,thisSensor,colorList1{ii});
+%     subplot(2,1,2); plot(pred(:),theseData(:),colorList2{ii})
+%     identityLine;
+% end
 
 %% Set up a set of low frequency basis functions for the sensor
 
@@ -161,6 +162,7 @@ plot(wavelength,cFilters);
 estimatedFilters = zeros(length(wave),3);
 colorList1 = {'r-','g-','b-'};
 colorList2 = {'ro','go','bo'};
+colorList3 = {'r*','g*','b*'};
 for ii = 1:3
     ieNewGraphWin([],'tall');
     theseData = mRGB(:,ii)';
@@ -176,33 +178,44 @@ for ii = 1:3
 end
 estimatedFilters = ieScale(estimatedFilters,1);
 
-%%
+%% Read in the sensor data for the TLCI Standard Camera Model
+% and compare to the predicted data
 arriSensor = ieReadSpectra('arriSensorNIRon.mat',wave);
 ieNewGraphWin;
 arriSensor = ieScale(arriSensor,1);
 plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
-legend({'web','web','web','estimated','estimated','estimated'})
+legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 
-%% Leave the red alone but make green and blue max relative to red
-arriMax = max(arriSensor);
-estMax = max(estimatedFilters);
-arriSensorScaled = arriSensor*diag([1,estMax(2)/arriMax(2),estMax(3)/arriMax(3)]);
-ieNewGraphWin;
-plot(wave,arriSensorScaled);
+%% Leave the green alone but make red and blue max relative to red
+% arriMax = max(arriSensor);
+% estMax = max(estimatedFilters);
+% arriSensorScaled = arriSensor*diag([estMax(1)/arriMax(1),1,estMax(3)/arriMax(3)]);
+% ieNewGraphWin;
+% plot(wave,arriSensorScaled);
+% 
 
-arriScaledPredRGB = arriSensorScaled'*radiance;
-arriScaledPredRGB = arriScaledPredRGB';
+% arriScaledPredRGB = arriSensorScaled'*radiance;
+% arriScaledPredRGB = arriScaledPredRGB';
+% ieNewGraphWin;
+% for ii=1:3
+%     plot(ieScale(arriScaledPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+%     hold on;
+% end
+% identityLine;
+
+
+arriPredRGB = arriSensor'*radiance;
+arriPredRGB = arriPredRGB';
 ieNewGraphWin;
 for ii=1:3
-    plot(ieScale(arriScaledPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+    plot(ieScale(arriPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
     hold on;
 end
 identityLine;
+hold on;
 
-%%
 estimatedFiltersRGB = estimatedFilters'*radiance;
 estimatedFiltersRGB = estimatedFiltersRGB';
-ieNewGraphWin;
 for ii=1:3
     plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
     hold on;
@@ -233,27 +246,37 @@ cvx_end
 %}
 
 %%
-img = XW2RGBFormat(mRGB,4,6);
-img = imageIncreaseImageRGBSize(img,50);
-ieNewGraphWin;
-imagescRGB(img)
-
-%%
-ieNewGraphWin;
-
-rgbPredScaled = rgbPred/max(rgbPred(:));
-mRGBScaled = mRGB/max(mRGB(:));
-
-symbolList = {'ro','gx','bs'};
-for ii=1:3
-    thisSymbol = symbolList{ii};
-    plot(mRGBScaled(:,ii),rgbPredScaled(:,ii),thisSymbol);
-    hold on;
-end
-
-grid on;
-title('ARRI MCC image data captured under White light (ARRI)')
-xlabel('Measured');
-ylabel('Predicted');
-%%
-
+% img = XW2RGBFormat(mRGB,4,6);
+% img = imageIncreaseImageRGBSize(img,50);
+% ieNewGraphWin;
+% imagescRGB(img)
+% 
+% %%
+% ieNewGraphWin;
+% 
+% rgbPredScaled = rgbPred/max(rgbPred(:));
+% mRGBScaled = mRGB/max(mRGB(:));
+% 
+% symbolList = {'ro','gx','bs'};
+% for ii=1:3
+%     thisSymbol = symbolList{ii};
+%     plot(mRGBScaled(:,ii),rgbPredScaled(:,ii),thisSymbol);
+%     hold on;
+% end
+% 
+% grid on;
+% title('ARRI MCC image data captured under White light (ARRI)')
+% xlabel('Measured');
+% ylabel('Predicted');
+% %% plot data for the "Alexa" sensor similar to that published by Karge 
+% % see https://www.hdm-stuttgart.de/open-film-tools/english/publications/ProjectSummary.pdf
+% 
+% load('arriSensorDocumentation.mat');
+% ieNewGraphWin;
+% plot(blueARRIsensor(:,1), blueARRIsensor(:,2), 'b-');
+% hold on;
+% plot(greenARRIsensor(:,1), greenARRIsensor(:,2), 'g-');
+% plot(redARRIsensor(:,1), redARRIsensor(:,2), 'r-');
+% 
+% 
+% 
