@@ -3,6 +3,8 @@
 % 
 
 %% Set up the actors
+% make sure that isetcam/ isetfluorescence and arriscope is on your Matlab path
+
 
 % Load the sensor
 wave = 400:10:700;
@@ -64,7 +66,7 @@ disp('Downloaded and unzipped arri image data');
 
 %% RGB data
 
-chdir(fullfile(arriRootPath,'local','MacbethIRON'));
+chdir(fullfile(arriRootPath,'data','macbethColorChecker','MacbethIRON'));
 
 rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
     'MacbethCc_red17_fIRon.ari', 'MacbethCc_violet17_fIRon.ari', ...
@@ -180,12 +182,27 @@ estimatedFilters = ieScale(estimatedFilters,1);
 
 %% Read in the sensor data for the TLCI Standard Camera Model
 % and compare to the predicted data
+% This is just for curiousity ..
 arriSensor = ieReadSpectra('arriSensorNIRon.mat',wave);
 ieNewGraphWin;
 arriSensor = ieScale(arriSensor,1);
 plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
 legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 
+ieNewGraphWin;
+plot(wave,arriSensor(:,1),'r','linewidth',3); hold on;
+plot(wave,arriSensor(:,2),'g','linewidth',3); 
+plot(wave,arriSensor(:,3),'b','linewidth',3); 
+plot(wave,estimatedFilters(:,1),'r--','linewidth',3); 
+plot(wave,estimatedFilters(:,2),'g--','linewidth',3); 
+plot(wave,estimatedFilters(:,3),'b--','linewidth',3); 
+legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
+
+% ieNewGraphWin;
+% plot(arriSensor(:,1),estimatedFilters(:,1),'ro'); hold on;
+% plot(arriSensor(:,2),estimatedFilters(:,2),'go'); 
+% plot(arriSensor(:,3),estimatedFilters(:,3),'bo'); 
+% identityLine;
 %% Leave the green alone but make red and blue max relative to red
 % arriMax = max(arriSensor);
 % estMax = max(estimatedFilters);
@@ -193,7 +210,7 @@ legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 % ieNewGraphWin;
 % plot(wave,arriSensorScaled);
 % 
-
+% 
 % arriScaledPredRGB = arriSensorScaled'*radiance;
 % arriScaledPredRGB = arriScaledPredRGB';
 % ieNewGraphWin;
@@ -214,6 +231,7 @@ end
 identityLine;
 hold on;
 
+ieNewGraphWin;
 estimatedFiltersRGB = estimatedFilters'*radiance;
 estimatedFiltersRGB = estimatedFiltersRGB';
 for ii=1:3
@@ -221,6 +239,8 @@ for ii=1:3
     hold on;
 end
 identityLine;
+
+% WE can probably do better ...
 
 %% CVX format
 %
