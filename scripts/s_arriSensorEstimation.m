@@ -26,7 +26,7 @@ end
 
 %{
 plotRadiance(wave,radiance);
-title('MCC under 6 different lights")
+title('MCC under 6 different lights')
 %}
 
 
@@ -185,20 +185,55 @@ figure; plot(wave, estimatedFilters(:,1),'r')
 hold on; plot(wave, estimatedFilters(:,2),'g')
 plot(wave, estimatedFilters(:,3),'b')
 
+
+%% Predictions by the curves published by Wisotsky
+% Read in the sensor data for the sensor curves published by Wisotsky Et Al
+% and compare to the predicted data
+WisotskySensor = ieReadSpectra('WisotskySensorNIRon.mat',wave);
+ieNewGraphWin;
+WisotskySensor = ieScale(WisotskySensor,1);
+plot(wave,WisotskySensor,'--',wave,estimatedFilters,'-');
+legend({'Wisotsky','Wisotsky','Wisotsky','estimated','estimated','estimated'})
+
+WitsotskyPredRGB = WisotskySensor'*radiance;
+WitsotskyPredRGB = WitsotskyPredRGB';
+ieNewGraphWin;
+for ii=1:3
+    plot(ieScale(WitsotskyPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
+    hold on;
+end
+identityLine;
+xlabel('RGB values predicted by the sensor data published by Wisotsky');
+ylabel('RGB values measured by ARRI sensors');
+% hold on;
+
+ieNewGraphWin;
+estimatedFiltersRGB = estimatedFilters'*radiance;
+estimatedFiltersRGB = estimatedFiltersRGB';
+for ii=1:3
+    plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+    hold on;
+end
+identityLine;
+xlabel('RGB values predicted by the estimated sensors');
+ylabel('RGB values measured by ARRI sensors');
+
+% WE can probably do better ...
+
 %% Read in the sensor data for the TLCI Standard Camera Model
 % and compare to the predicted data
 % This is just for curiousity ..
-arriSensor = ieReadSpectra('arriSensorNIRon.mat',wave);
+TLCISensor = ieReadSpectra('arriSensorNIRon.mat',wave);
 ieNewGraphWin;
-arriSensor = ieScale(arriSensor,1);
-plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
+TLCISensor = ieScale(TLCISensor,1);
+plot(wave,TLCISensor,'--',wave,estimatedFilters,'-');
 legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 title('TLCI is the Standard Camera Model')
 
 ieNewGraphWin;
-plot(wave,arriSensor(:,1),'r','linewidth',3); hold on;
-plot(wave,arriSensor(:,2),'g','linewidth',3); 
-plot(wave,arriSensor(:,3),'b','linewidth',3); 
+plot(wave,TLCISensor(:,1),'r','linewidth',3); hold on;
+plot(wave,TLCISensor(:,2),'g','linewidth',3); 
+plot(wave,TLCISensor(:,3),'b','linewidth',3); 
 plot(wave,estimatedFilters(:,1),'r--','linewidth',3); 
 plot(wave,estimatedFilters(:,2),'g--','linewidth',3); 
 plot(wave,estimatedFilters(:,3),'b--','linewidth',3); 
@@ -226,57 +261,57 @@ legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 % end
 % identityLine;
 
-arriPredRGB = arriSensor'*radiance;
-arriPredRGB = arriPredRGB';
+TLCIPredRGB = TLCISensor'*radiance;
+TLCIPredRGB = TLCIPredRGB';
 ieNewGraphWin;
 for ii=1:3
-    plot(ieScale(arriPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
+    plot(ieScale(TLCIPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
     hold on;
 end
 identityLine;
-hold on;
+xlabel('RGB values predicted by the Standard (TLCI) Camera Model');
+ylabel('RGB values measured by ARRI sensors');
+% hold on;
 
 estimatedFiltersRGB = estimatedFilters'*radiance;
 estimatedFiltersRGB = estimatedFiltersRGB';
+ieNewGraphWin;
 for ii=1:3
     plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
     hold on;
 end
 identityLine;
+xlabel('RGB values predicted by the estimated sensors');
+ylabel('RGB values measured by ARRI sensors');
 
-
-%% Predictions by the curves published by Wisotsky
-% Read in the sensor data for the sensor curves published by Wisotsky Et Al
-% and compare to the predicted data
-arriSensor = ieReadSpectra('WisotskySensorNIRon.mat',wave);
-ieNewGraphWin;
-arriSensor = ieScale(arriSensor,1);
-plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
-legend({'Wisotsky','Wisotsky','Wisotsky','estimated','estimated','estimated'})
-
-arriPredRGB = arriSensor'*radiance;
-arriPredRGB = arriPredRGB';
-ieNewGraphWin;
-for ii=1:3
-    plot(ieScale(arriPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
-    hold on;
-end
-identityLine;
-hold on;
-
-ieNewGraphWin;
-estimatedFiltersRGB = estimatedFilters'*radiance;
-estimatedFiltersRGB = estimatedFiltersRGB';
-for ii=1:3
-    plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
-    hold on;
-end
-identityLine;
-
-% WE can probably do better ...
-
-%% CVX format
+%% The Standard TLCI Camera model seems to be a very good fit for the data.
 %
+% Can we improve the fit by a slight linear transform of the data, rather
+% than accepting the TLC sensor model as perfect. The intercept of the
+% linear fit might be dark level and the slope a change in gain
+
+% In this case, T is the best linear transform between the observed and
+% data predicted by TLCI
+% Find a linear transform that improves the relationship between the RGB values predicted
+% by the TLCI model and the measured RGB values
+% First scale between 0 and 1
+
+% T = TLCIPredRGB/mRGB;
+% improved = T*mRGB;
+% 
+% ieNewGraphWin;
+% co = {'ro','gs','bx'};
+% for ii=1:3
+%     plot(ieScale(improved(ii,:),1),ieScale(mRGB(ii,:),1),co{ii}); hold on
+% end
+% grid on; identityLine;
+% xlabel('Improved prediction')
+% ylabel('Observed');
+
+%% We can look at T and notice that T*oeQE is the improved sensor model
+% improvedQE = (T*oeQE')';
+% hdl = plotRadiance(wavelength,improvedQE,'title','Improved sensor quantum efficiency');%% CVX format
+%%
 % Ask Henryk for some help with this.
 %
 %{
