@@ -273,44 +273,8 @@ xlabel('RGB values predicted by the Standard (TLCI) Camera Model');
 ylabel('RGB values measured by ARRI sensors');
 % hold on;
 
-estimatedFiltersRGB = estimatedFilters'*radiance;
-estimatedFiltersRGB = estimatedFiltersRGB';
-ieNewGraphWin;
-for ii=1:3
-    plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
-    hold on;
-end
-identityLine;
-xlabel('RGB values predicted by the estimated sensors');
-ylabel('RGB values measured by ARRI sensors');
+% The Standard TLCI Camera model seems to be a very good fit for the data.
 
-%% The Standard TLCI Camera model seems to be a very good fit for the data.
-%
-% Can we improve the fit by a slight linear transform of the data, rather
-% than accepting the TLC sensor model as perfect. The intercept of the
-% linear fit might be dark level and the slope a change in gain
-
-% In this case, T is the best linear transform between the observed and
-% data predicted by TLCI
-% Find a linear transform that improves the relationship between the RGB values predicted
-% by the TLCI model and the measured RGB values
-% First scale between 0 and 1
-
-% T = TLCIPredRGB/mRGB;
-% improved = T*mRGB;
-% 
-% ieNewGraphWin;
-% co = {'ro','gs','bx'};
-% for ii=1:3
-%     plot(ieScale(improved(ii,:),1),ieScale(mRGB(ii,:),1),co{ii}); hold on
-% end
-% grid on; identityLine;
-% xlabel('Improved prediction')
-% ylabel('Observed');
-
-%% We can look at T and notice that T*oeQE is the improved sensor model
-% improvedQE = (T*oeQE')';
-% hdl = plotRadiance(wavelength,improvedQE,'title','Improved sensor quantum efficiency');%% CVX format
 %%
 % Ask Henryk for some help with this.
 %
