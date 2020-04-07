@@ -4,7 +4,7 @@
 
 %% Set up the actors
 
-% Load the sensor
+% Spectral radiance of the stimuli
 wave = 400:10:700;
 
 % Load the macbeth reflectances
@@ -23,19 +23,14 @@ for ii=1:numel(testLights)
 end
 
 %{
-ieNewGraphWin;
-plot(wave,radiance);
-xlabel('Wave');
+plotRadiance(wave,radiance);
+title('MCC under 6 different lights")
 %}
 
-%%  Compare some of the lights above with the MCC as expected
-%{
-scene = sceneCreate;
-sceneWindow(scene);
-%}
 
 %%  Now go get the raw data and compare that to the predicted RGB
-
+% We only need to run this once if we store the data in the local directory
+% download data from Flywheel
 %{
 st = scitran('stanfordlabs');
 st.verify;
@@ -63,6 +58,12 @@ disp('Downloaded and unzipped arri image data');
 %}
 
 %% RGB data
+% Display the raw camera images captured by the ARRIScope camera with the
+% NIR filter on for each of the 6 lights
+% Then grab the mean R, G and B values for each of the 24 patches captured
+% under each of the 6 lights
+% Notice that the raw camera image captured under violet17 has very little
+% signal and is, therefore, noisy
 
 chdir(fullfile(arriRootPath,'local','MacbethIRON'));
 
@@ -109,7 +110,7 @@ for ii=1:numel(rgbImages)
     mRGB = [mRGB; thisRGB];
 end
 
-%% Have a look at the mRGB data
+%% Have a look at the mRGB data (no saturated pixels)
 ieNewGraphWin;
 plot(mRGB);
 
@@ -176,7 +177,11 @@ for ii = 1:3
     identityLine;
     estimatedFilters(:,ii) = thisFilter(:);
 end
+
 estimatedFilters = ieScale(estimatedFilters,1);
+figure; plot(wave, estimatedFilters(:,1),'r')
+hold on; plot(wave, estimatedFilters(:,2),'g')
+plot(wave, estimatedFilters(:,3),'b')
 
 %% Read in the sensor data for the TLCI Standard Camera Model
 % and compare to the predicted data
@@ -185,6 +190,7 @@ ieNewGraphWin;
 arriSensor = ieScale(arriSensor,1);
 plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
 legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
+title('TLCI is the Standard Camera Model')
 
 %% Leave the green alone but make red and blue max relative to red
 % arriMax = max(arriSensor);
@@ -203,6 +209,33 @@ legend({'TLCI','TLCI','TLCI','estimated','estimated','estimated'})
 % end
 % identityLine;
 
+arriPredRGB = arriSensor'*radiance;
+arriPredRGB = arriPredRGB';
+ieNewGraphWin;
+for ii=1:3
+    plot(ieScale(arriPredRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList3{ii});
+    hold on;
+end
+identityLine;
+hold on;
+
+estimatedFiltersRGB = estimatedFilters'*radiance;
+estimatedFiltersRGB = estimatedFiltersRGB';
+for ii=1:3
+    plot(ieScale(estimatedFiltersRGB(:,ii),1),ieScale(mRGB(:,ii),1),colorList2{ii});
+    hold on;
+end
+identityLine;
+
+
+%% Predictions by the curves published by Wisotsky
+% Read in the sensor data for the sensor curves published by Wisotsky Et Al
+% and compare to the predicted data
+arriSensor = ieReadSpectra('WisotskySensorNIRon.mat',wave);
+ieNewGraphWin;
+arriSensor = ieScale(arriSensor,1);
+plot(wave,arriSensor,'--',wave,estimatedFilters,'-');
+legend({'Wisotsky','Wisotsky','Wisotsky','estimated','estimated','estimated'})
 
 arriPredRGB = arriSensor'*radiance;
 arriPredRGB = arriPredRGB';
