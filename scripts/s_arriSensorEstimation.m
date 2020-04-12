@@ -11,12 +11,19 @@ wave = 400:10:700;
 
 % Load the macbeth reflectances
 surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
+plotRadiance(wave,surfaces);
 
 
 % For each light multiply each MCC patch to get the expected radiance
 testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
     'redSonyLight.mat','violetSonyLight.mat',...
     'whiteSonyLight.mat','whiteARRILight.mat'};  
+ieNewGraphWin;
+for ii = 1:numel(testLights)
+    thisLight = ieReadSpectra(testLights{ii},wave);
+    plot(wave,thisLight); hold on
+end
+
 
 radiance = [];
 for ii=1:numel(testLights)
@@ -112,6 +119,7 @@ for ii=1:numel(rgbImages)
     mRGB = [mRGB; thisRGB];
 end
 
+
 %% Have a look at the mRGB data (no saturated pixels)
 ieNewGraphWin;
 plot(mRGB);
@@ -148,7 +156,7 @@ width      = ones(size(cPos))*30;
 cFilters = sensorColorFilter(cfType, wavelength, cPos, width);
 %{
 ieNewGraphWin;
-plot(wavelength,cFilters);
+plot(wavelength,cFilters,'linewidth',3);
 %}
 
 % Basic equation
@@ -184,7 +192,9 @@ estimatedFilters = ieScale(estimatedFilters,1);
 figure; plot(wave, estimatedFilters(:,1),'r')
 hold on; plot(wave, estimatedFilters(:,2),'g')
 plot(wave, estimatedFilters(:,3),'b')
-
+comment = 'ARRI sensors estimated by the script s_arriSensorEstimation.m';
+fname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors');
+ieSaveSpectralFile(wave,estimatedFilters,comment,fname);
 
 %% Predictions by the curves published by Wisotsky
 % Read in the sensor data for the sensor curves published by Wisotsky Et Al
