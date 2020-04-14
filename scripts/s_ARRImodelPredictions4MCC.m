@@ -1,4 +1,4 @@
-%% s_ARRImodelPredictions.m
+%% s_ARRImodelPredictions4MCC.m
 %
 % Purpose:  
 %   Use the raw ARRI RGB sensor values captured under 6 different
