@@ -18,11 +18,34 @@ plotRadiance(wave,surfaces);
 testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
     'redSonyLight.mat','violetSonyLight.mat',...
     'whiteSonyLight.mat','whiteARRILight.mat'};  
+
+% Note that in the spring of 2019, I sent the PR715 to be calibrated by PhotoResearch.
+% When it was returned, I compared the spectrophotometric measurements of the PR715 and the PF670 in our lab
+% The numbers were off by a factor of 5.
+% So I compared the PR670 measurements with a second PR670 that
+% PhotoResearch insisted was calibrated. Since these two units gave the
+% same number, I deduced that the PR 715 was not calibrated correctly.
+% I argued with PhotoResearch for over a year about this, refusing to pay
+% their bill for an incorrect calibration. 
+% After I told them that I would publish my results on the web, they
+% relented and told me to send the PR715 back for recalibration.
+% In the meantime, we need to correct the PR715 in order to get numbers
+% that are on the same scale as the PR670.
+% Hence, this long explanation and the empirical correction below to get
+% the numbers right (jf)
+
+
 ieNewGraphWin;
 for ii = 1:numel(testLights)
     thisLight = ieReadSpectra(testLights{ii},wave);
-    plot(wave,thisLight); hold on
+    plot(wave,log(thisLight * 5.453933991449514 -0.000976427089295)); hold on;
+    
 end
+% Sonywhite = ieReadSpectra(testLights{5},wave);
+% ARRIwhite = ieReadSpectra(testLights{6},wave);
+% ieNewGraphWin;
+% plot(ARRIwhite');hold on;
+% plot(Sonywhite');
 
 
 radiance = [];
@@ -284,6 +307,33 @@ ylabel('RGB values measured by ARRI sensors');
 % hold on;
 
 % The Standard TLCI Camera model seems to be a very good fit for the data.
+
+%% Multiply the sensors with the light to define the sensitivity of the spectral channels
+% We expect the blue light * red sensor to not produce a signal - i.e. not
+% a meaningful channel
+
+sensorLight = zeros(numel(wave),3,numel(testLights));
+for ii = 1:numel(testLights)
+    thisLight = ieReadSpectra(testLights{ii},wave);
+    sensorLight(:,:,ii) = diag(thisLight)*estimatedFilters;
+end
+
+
+ieNewGraphWin;
+area = zeros(3,numel(testLights));
+for ii=1:numel(testLights)
+    plot(wave,sensorLight(:,:,ii))
+    hold on;
+    testLight(ii)
+    area(:,ii) = sum(sensorLight(:,:,ii))';
+end
+
+
+
+testLights
+area
+% ieNewGraphWin; surf(area)
+
 
 %%
 % Ask Henryk for some help with this.

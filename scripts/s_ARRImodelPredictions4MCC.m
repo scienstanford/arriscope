@@ -69,7 +69,7 @@ predSensorValues = sensor' * surfaces;
 nDim = 6;
 [linModel,S,V] = svd(surfaces);
 linModel = linModel(:,1:nDim);
-plotReflectance(wave,linModel); % The linModel are the N spectral basis funtions
+plotReflectance(wave,linModel); % The linModel are the N spectral basis functions
 xaxisLine;
 S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
