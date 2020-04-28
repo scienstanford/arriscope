@@ -1,5 +1,25 @@
 
 %% s_SNRperSpectralChannel
+% 
+% Purpose: calculate the SNR for each channel of a multispectral imaging system
+%
+% Background
+%   A multispectral imaging system has more than 3 spectral channels.  
+%   One type of multispectral imaging system creates multiple spectral channels by 
+%   combining different spectrally-tuned sensors with different spectral lights. 
+%   The spectral sensivitiy of each channel in a multispectral imaging system is thus defined by 
+%   the spectral sensitivities of the sensor (R, G or B) and 
+%   the spectral power of the illuminant.
+%
+% Method
+%   We use the spectral sensitivity of the sensor and the spectral power of
+%   the light to calculate the maximum number of photons (Y) a channel can
+%   collect in a single pixel (assume 1 micron) and a single exposure
+%   (assume 30 msec)
+%   We then calculate channel SNR using the formula SNR = 20 * log10(Y./(Y.^0.5)) 
+%
+% JEF 04/27/2020
+%%
 % First, calculate the spectral radiance or a white target by multiplying the R, G and
 % B sensor spectral sensitivities with the light spectral energy
 
