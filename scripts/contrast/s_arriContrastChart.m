@@ -22,7 +22,7 @@ sFiles{1} = which('tissueReflectances.mat');
 % [t,w] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
 
 % The number of samples from each of the data sets, respectively
-sSamples = 11;    %
+sSamples{1} = 1:11;    %
 
 % How many row/col spatial samples in each patch (they are square)
 pSize    = 24;           % Patch size
