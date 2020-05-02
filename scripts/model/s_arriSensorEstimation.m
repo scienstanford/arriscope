@@ -3,7 +3,7 @@
 % 
 
 %% Set up the actors
-% make sure that isetcam/ isetfluorescence and arriscope is on your Matlab path
+% make sure that isetcam and arriscope is on your Matlab path
 
 
 % Spectral radiance of the stimuli

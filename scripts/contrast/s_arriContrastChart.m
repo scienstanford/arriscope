@@ -8,6 +8,15 @@
 
 %%
 ieInit
+%% lights
+
+Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
+    'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
+
+% for ii = 1:length(Lights)
+%     % loop when we are ready
+% end
+ii = 1;
 
 %% Default usage with sceneCreate
 
@@ -33,24 +42,38 @@ sampling = 'no replacement';
 
 scene = sceneCreate('reflectance chart',pSize,sSamples,sFiles,wave,grayFlag,sampling);
 scene = sceneSet(scene,'name','Pig tissues');
-scene = sceneAdjustIlluminant(scene,'D65');
+%% set the light
+
+wave = sceneGet(scene,'wave');
+ThisLight = ieReadSpectra(Lights{ii},wave);
+% ieNewGraphWin; plot(wave,ThisLight);
+sceneThisLight= sceneAdjustIlluminant(scene,ThisLight);
+sceneThisLight = sceneSet(sceneThisLight,'name','Reflectance Chart');
+ieAddObject(sceneThisLight); sceneWindow;
 
 % The chart parameters are attached to the scene object
-sceneGet(scene,'chart parameters')
+sceneGet(sceneThisLight,'chart parameters')
 
 % Show it on the screen
-sceneWindow(scene);
+sceneWindow(sceneThisLight);
 
 %%
 oi = oiCreate;
 oi = oiCompute(oi,scene);
 
 %%
+
 sensor = sensorCreate;
 fov = sceneGet(scene,'fov');
 sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],scene,oi);
-sensor = sensorCompute(sensor,oi);
 
+wave = sensorGet(sensor,'wave');
+% Load sensor
+fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
+data = ieReadColorFilter(wave,fullFileName); 
+sensor = sensorSet(sensor,'filter spectra',data);
+
+sensor = sensorCompute(sensor,oi);
 sensorWindow(sensor);
 
 %%
@@ -72,8 +95,8 @@ delete(rectHandles);
 %% Compare the mahalanobis distance
 
 % Each row is a separate 3D observation
-X = data{2};
-Y = data{3};
+X = data{9};
+Y = data{6};
 
 % Force symmetry
 disp((mean(mahal(X,Y)) + mean(mahal(Y,X)))/2)

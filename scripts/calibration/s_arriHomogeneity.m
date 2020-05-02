@@ -44,7 +44,7 @@ chdir(fullfile(icalRootPath,'local'));
 % Select the light with spectra and camera images that we want to analyze
 
 
-channel = 'Red';   % 'Red','Green','Blue','UV','White', 'Infrared'
+channel = 'Blue';   % 'Red','Green','Blue','UV','White', 'Infrared'
 str     = sprintf('label=%s',channel);
 Acquisition = thisSession.acquisitions.findOne(str);
 

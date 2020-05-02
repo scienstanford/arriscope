@@ -22,6 +22,7 @@
 %%
 % First, calculate the spectral radiance or a white target by multiplying the R, G and
 % B sensor spectral sensitivities with the light spectral energy
+wave = 400:10:700;
 
 % load the sensor spectral sensitivities
 arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
@@ -37,7 +38,7 @@ testLights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',.
 sensorLight = zeros(numel(wave),3,numel(testLights));
 for ii = 1:numel(testLights)
     thisLight = ieReadSpectra(testLights{ii},wave);
-    sensorLight(:,:,ii) = diag(thisLight)*estimatedFilters;
+    sensorLight(:,:,ii) = diag(thisLight)*arriQE;
 end
 
 %% convert radiance to quanta
@@ -101,22 +102,50 @@ end
 % for ii = 1:numel(rgbImages)
 %     plot(area(ii,1),mRGB(ii,1),'ro');  hold on; plot(area(ii,2),mRGB(ii,2),'ro'); plot(area(ii,3),mRGB(ii,3),'ro');
 % end
+%% Plot the predicted number of photons captured by a 1 micron pixel in 30 msec versus mRGB
+ieNewGraphWin;
+plot(mRGBv,Y,'r*');
+
+% p = polyfit(mRGBv,Y,1);
+% x1 =linspace(1,3.3956e+03,100);
+% y1 = polyval(p,x1);
+% figure;
+% plot(mRGBv,Y,'o');
+% hold on;
+% plot(x1,y1);
+% hold off;
+% xlabel('Sensor Digital Value');
+% ylabel('Number of Photons/1 micron pixel/30 msec');
+
 %% Plot SNR as function of mRGB
 
 mRGBv=reshape(mRGB',1,18);
 ieNewGraphWin;
-plot(mRGBv,SNRdb,'*');
+plot(mRGBv,SNRdb,'r*');
+% p = polyfit(mRGBv,SNRdb,1);
+% x1 =linspace(1,3.3956e+03,100);
+% y1 = polyval(p,x1)
+% figure
+% plot(mRGBv,SNRdb,'o')
+% hold on
+% plot(x1,y1)
+% hold off
+
+semilogx(mRGBv,SNRdb,'r*');
+
 ylabel('SNR(db)');
 xlabel('Digital Sensor Value (Median)');
 
+ieNewGraphWin;
+plot(mRGBv,Y,'b*');
 
-%% 18 measurements can be expressed as 7 independent channel
-% wave = 400:10:700;
-% x=reshape(sensorLight,31,18);
-% ieNewGraphWin; plot(wave,x);
-% [u,s,v] = svd(x);
-% ieNewGraphWin; plot(cumsum(diag(s))/sum(diag(s)));
-% ieNewGraphWin; plot(wave,u(:,1:7));
+
+%% 18 channels (Sensor * Light) can be expressed as 9 independent channel (99% of the variance)
+x=reshape(sensorLight,31,18);
+ieNewGraphWin; plot(wave,x);
+[u,s,v] = svd(x);
+ieNewGraphWin; plot(cumsum(diag(s))/sum(diag(s)));
+ieNewGraphWin; plot(wave,u(:,1:9));
 %% Remove the spectral channels that we consider to be noise
 % Retain 9 spectral channels
 %   R, G and B sensors * ARRI white     x(:,1), x(:,2), x(:,3)
