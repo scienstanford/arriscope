@@ -19,10 +19,11 @@ nLights = numel(Lights);
 
 sFiles = cell(1,1);
 sFiles{1} = which('tissueReflectances.mat');
-% [t,w] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
+% [t,w, comment] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
 
 % The number of samples from each of the data sets, respectively
-sSamples{1} = 1:11;    %
+sSamples{1} = repmat(1:11,1,4);    %
+rPatch = ceil(sqrt(numel(sSamples{1}))); cPatch = rPatch;
 
 % How many row/col spatial samples in each patch (they are square)
 pSize    = 24;           % Patch size
@@ -34,6 +35,17 @@ scene = sceneCreate('reflectance chart',pSize,sSamples,sFiles,wave,grayFlag,samp
 scene = sceneSet(scene,'name','Pig tissues');
 
 % sceneWindow(scene);
+
+%% Illuminant pattern
+
+% Inhomogeneous
+%{
+[X,Y] = meshgrid(-8:8,-10:10);
+pattern = sqrt(X.^2 + Y.^2) + 1;
+%}
+
+% Homogeneous
+pattern = [];
 
 %% Build the oi
 oi = oiCreate;
@@ -65,6 +77,9 @@ for ii=1:nLights
     % sceneThisLight = sceneSet(sceneThisLight,'name','Reflectance Chart');
     % sceneWindow(sceneThisLight);
     
+    % Put a spatial pattern on the illuminant.
+    sceneThisLight = sceneIlluminantSS(sceneThisLight,pattern);
+    
     % The chart parameters are attached to the scene object
     % sceneGet(sceneThisLight,'chart parameters')
     % sceneWindow(sceneThisLight);
@@ -73,9 +88,7 @@ for ii=1:nLights
     ip     = ipCompute(ip,sensor);
     % ipWindow(ip);
     
-    %%
     if ii==1
-        rPatch = 4; cPatch = 3;
         cp = chartCornerpoints(ip,true);
         [rects,mLocs,pSize] = chartRectangles(cp,rPatch,cPatch,0.5);
         rectHandles = chartRectsDraw(ip,rects);
@@ -113,25 +126,24 @@ ieNewGraphWin; plot(thisBasis);
 %}
 
 %% Could loop on the 11 surfaces
-
 mahalMatrix = zeros(11,11);
 for ss = 1:11
-    X = data{ss}*thisBasis;
+    these = find(sSamples{1} == ss);
+    X = []; for tt=1:length(these), X = [X;data{these(tt)}];end
+    X = X*thisBasis;
     for ii=ss:11
-        Y = data{ii}*thisBasis;
+        these = find(sSamples{1} == ii);
+        Y = []; 
+        for tt=1:length(these), Y = [Y;data{these(tt)}];end
+        Y = Y*thisBasis;
         mahalMatrix(ss,ii) = log10(mean(mahal(X,Y)) + mean(mahal(Y,X)))/2;
         mahalMatrix(ii,ss) = mahalMatrix(ss,ii);
     end
 end
-imagesc(mahalMatrix); colormap(gray);
-surf(mahalMatrix); colormap(gray);
 
 %%
-% Each row is a separate 3D observation
-X = data{1}*thisBasis;
-Y = data{3}*thisBasis;
-    
-% Force symmetry
-disp((mean(mahal(X,Y)) + mean(mahal(Y,X)))/2)
+ieNewGraphWin;
+imagesc(mahalMatrix); colormap(gray);
+surf(mahalMatrix); colormap(gray);
 
 %% END
