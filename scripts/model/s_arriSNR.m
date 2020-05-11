@@ -1,5 +1,5 @@
 
-%% s_SNRperSpectralChannel
+%% s_arriSNR.m
 % 
 % Purpose: calculate the SNR for each channel of a multispectral imaging system
 %
