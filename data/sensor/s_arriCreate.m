@@ -11,7 +11,9 @@
 %% Read in the TLCI sensor
 % The European Broadcast Union (EBU) created a "Standard Camera Model" as part of their TLCI-2012 (Television Lighting Consistency Index)
 % see https://www.ibc.org/download?ac=3920
-
+%%
+ieInit % clear all variables
+% 
 % read the grabit data 
 chdir(fullfile(arriRootPath,'data','sensor')) 
 wave = 380:1:700;

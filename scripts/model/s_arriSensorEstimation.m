@@ -4,7 +4,7 @@
 
 %% Set up the actors
 % make sure that isetcam and arriscope is on your Matlab path
-
+ieInit % clear all variables
 
 % Spectral radiance of the stimuli
 wave = 400:10:700;

@@ -1,4 +1,4 @@
-%% a_arriContrastChartResponse.m
+%% s_arriContrastChartResponse.m
 % Purpose:
 %   Quantify the discriminability between two tissue types based on the
 %   difference in camera RGB values captured when illuminated by N lights
@@ -41,7 +41,7 @@
 %
 % JEF/BAW
 %%
-ieInit
+ieInit % clear all variables
 wave     = 400:10:640;   % Whatever is in the reflectance data file
 
 %% Select the number of lights
@@ -129,10 +129,12 @@ sensor = arriSensorCreate;
 fov    = sceneGet(scene,'fov');
 sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],scene,oi);
 % For the white light the sensor is saturated at 3 ms 
-sensor = sensorSet(sensor,'exp time',0.003);
-% sensor = sensorSet(sensor,'exp time',0.035); % Exposure for the scaled tissue
-% sensor = sensorSet(sensor,'exp time',0.0003); % Exposure for non-uniform illumination
-
+% Selected this exposure duration so that the RGB image captured under the ARRI White light would not saturate
+    % sensor = sensorSet(sensor,'exp time',0.003); 
+    % sensor = sensorSet(sensor,'exp time',0.035); % Exposure for the scaled tissue
+    % sensor = sensorSet(sensor,'exp time',0.0003); % Exposure for non-uniform illumination
+% Set auto-exposure
+sensor = sensorSet(sensor,'auto exposure',1);
 %{
  sensor = sensorCreate;
  sensor = sensorSet(sensor,'wave',wave);
@@ -241,7 +243,8 @@ plot(wave,SpectralChannels);
 
 %%
 ieNewGraphWin;  
-plot(wave,SpectralChannels*U(:,1:3)*diag([-1 -1 -1])); xaxisLine;
+plot(wave,SpectralChannels*U(:,1:3)*diag([-1 -1 -1]),'linewidth',3); xaxisLine;
+% plot(wave,SpectralChannels*U(:,1:3)*diag([1 1 1]),'linewidth',3); xaxisLine;
 % multiplied by -1 so that the 1st principal component is positive
 % The first principal component represents the effect of the mean tissue reflectance 
 % The second principal component is a B+G/R opponent channel where R are
@@ -278,7 +281,7 @@ ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
     'R Sony 638nm', 'G Sony 638nm', 'B Sony 638nm', ...
     'R Sony 405nm', 'G Sony 405nm', 'B Sony 405nm'};
 
-t = array2table(abs(thisBasis))
+t = array2table(thisBasis);
 f=figure;
 uit = uitable(f,'Data',table2cell(t));
 uit.RowName = ChannelName;
@@ -336,8 +339,8 @@ uit.RowName = TissueType;
 % saveas(f,'MahalMatrix_AllLights_NonUniformLighting.png');
 
 %% Distance from nerve
-ieNewGraphWin;
-plot(mahalMatrix(:,7)); hold on;
-plot(mahalMatrix(:,8));
+% ieNewGraphWin;
+% plot(mahalMatrix(:,7)); hold on;
+% plot(mahalMatrix(:,8));
 
 %% END

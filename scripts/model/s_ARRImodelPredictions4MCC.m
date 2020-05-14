@@ -29,7 +29,9 @@
 %   Once we have done that, we can replace the MCC surfaces with a
 %   collection of reflectances for different tissue types.
 %% 1. Selection of surface reflectances
-
+%%
+ieInit % clear all variables
+%%
 wave = 400:10:700;
 
 % Load the macbeth reflectances
@@ -73,6 +75,7 @@ plotReflectance(wave,linModel); % The linModel are the N spectral basis function
 xaxisLine;
 S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
+
 
 %% 4. Find a N x B matrix that maps N sensor values into B weights 
 % Find the weights that are the LS solution to
