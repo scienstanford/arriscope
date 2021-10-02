@@ -25,12 +25,14 @@ plotReflectance(wave,tissue);
 %% Scale the data in various ways
 
 % Plot the tissue reflectance scaled by the area under the curve 
-%   scale = sum(tissue);
-%   tissueScaled = tissue*diag(1./scale);
-%   ieNewGraphWin; plot(wave,tissueScaled,'linewidth',2);
-%   comment = 'tissue reflectances scaled by the area under the curve';
-%   data = tissueScaled;
-%   ieSaveSpectralFile(wave,data,comment);
+%{   
+scale = sum(tissue);
+tissueScaled = tissue*diag(1./scale);
+ieNewGraphWin; plot(wave,tissueScaled,'linewidth',2);
+comment = 'tissue reflectances scaled by the area under the curve';
+data = tissueScaled;
+% ieSaveSpectralFile(wave,data,comment);
+%}   
   
   
 %{
@@ -48,7 +50,7 @@ title('Scaled by Max');
 %}
 
 %% Principal components analysis 
-nDim = 6;
+nDim = 2;
 
 % tissue = U * S * V'
 % U = Linear Model
@@ -78,32 +80,26 @@ plot(wave,predReflectance,'--','linewidth',2);
 hold off
 
 %% Remove the mean  (just an exercise ... the mean is the first component above)
-nDim = 5;
+nDim = 2;
  meanT = mean(tissue,2);
  tissueDemeaned = tissue - meanT;
  [linModel,S,V] = svd(tissueDemeaned);
 linModel = linModel(:,1:nDim);
 wgts = S*V'; wgts = wgts(1:nDim,:);
 
-plotReflectance(wave,linModel); % The linModel are the N spectral basis funtions
+ieNewGraphWin; plot(wave,linModel,'linewidth',2); % The linModel are the N spectral basis funtions
 xaxisLine;
 S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
 
-predReflectance = linModel*wgts;
-
-ieNewGraphWin;
-n = 4;
-for ii = 1:n
-plot(wave,linModel(:,ii),'linewidth',3); hold on;
-xlabel('Wavelength (nm)');
-end
-
+predReflectance2 = linModel*wgts;
 plotReflectance(wave,tissueDemeaned);
 hold on;
-plot(wave,predReflectance,'--');
+plot(wave,predReflectance2,'--');
 hold off
 
+ieNewGraphWin; plot(predReflectance, tissue,'*');hold on;
+plot(predReflectance2, tissueDemeaned,'*')
 
 %%
 
