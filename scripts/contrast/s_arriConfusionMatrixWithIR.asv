@@ -138,7 +138,7 @@ oi = oiCompute(oi,scene);
 sensor = sensorCreate;
 sensor = sensorSet(sensor,'wave',wave);
 fov    = sceneGet(scene,'fov');
-sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],scene,oi);
+sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
 
 fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadColorFilter(wave,fullFileName);
@@ -197,6 +197,11 @@ for ii=1:nLights
     end
     
 end
+
+% Add the special case for the 'irSonyLIght.mat' and the
+% 'ARRIestimatedSensorsNoNIRfilter.mat'
+
+
 
 %% Compute the reduced dimension of the sensor data
 % By combining 3 sensors and 6 lights, we produce, in theory, 18 different spectral channels
