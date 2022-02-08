@@ -1,16 +1,6 @@
 %% s_compareSensors.m
 %
-%  This script compared the QE of different sensors with the estimated QE
-%  for the ARRI sensor
-%
-%   It appears that the estimated QE is very similar to the QE for the Sony
-%   and On Semiconductor sensors
-%   So, we use the Sony QE without the NIR blocking filter as the best
-%   guess for the ARRI Sensors without the NIR blocking filter, after
-%   accounting for the difference in sensor gain
 % 
-% see ARRIestimatedSensorsNoNIRfilter
-
 cd /users/joyce/GitHub/isetcam/;
 addpath(genpath(pwd));
 cd /users/joyce/GitHub/arriscope/;
@@ -52,10 +42,10 @@ blue = SonyIMX249(:,3)/max(SonyIMX249(:,3)) * max(arriQE(:,3));
 plot(wave,red,'r'); hold on;
 plot(wave,green,'g');
 plot(wave,blue,'b');
-% 
-% sensor = [red, green, blue];
-% comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors, we are using these as a best guess for the ARRI Sensor QE without the NIR blocking filter'
-% ieSaveSpectralFile(wave,sensor,comment);
+
+sensor = [red, green, blue];
+comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors, we are using these as a best gu'
+ieSaveSpectralFile(wave,sensor,comment);
 
 % These plots simply show that the On Semiconductor sensor spectral QE are
 % close to the Sony Spectral QE
@@ -112,6 +102,27 @@ data = [arriQE_NIRoff_r_scaled,arriQE_NIRoff_g_scaled,arriQE_NIRoff_b_scaled];
 comment = "This is the arriQE_NIRoff sensor scaled to have the same gain as the estimated ARRI sensors";
 ieSaveSpectralFile(wave,data,comment);
 
+
+%% compare estimated ARRI sensors with Sony 
+% notice that they are similar with the exception of gain and crosstalk
+% (see bumps)
+ieNewGraphWin;
+plot(wave,arriQE(:,1),'r'); hold on;
+plot(wave,arriQE(:,2),'g'); 
+plot(wave,arriQE(:,3),'b'); 
+
+arriQE_NIRon_r_scaled = ieScale(arriQE_NIRon(:,1))*max(arriQE(:,1))
+plot(wave, arriQE_NIRon_r_scaled,'r--'); 
+
+arriQE_NIRon_g_scaled = ieScale(arriQE_NIRon(:,2))*max(arriQE(:,2))
+plot(wave, arriQE_NIRon_g_scaled,'g--');
+
+arriQE_NIRon_b_scaled = ieScale(arriQE_NIRon(:,3))*max(arriQE(:,3))
+plot(wave,arriQE_NIRon_b_scaled,'b--'); 
+
+data = [arriQE_NIRon_r_scaled,arriQE_NIRon_g_scaled,arriQE_NIRon_b_scaled];
+comment = "This is the arriQE_NIRon sensor scaled to have the same gain as the estimated ARRI sensors";
+ieSaveSpectralFile(wave,data,comment);
 
 %%
 TLCISensorFname = fullfile(arriRootPath,'data','sensor','TLCIsensors.mat');
