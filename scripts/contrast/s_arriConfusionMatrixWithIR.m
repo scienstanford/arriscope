@@ -154,12 +154,23 @@ sensor = sensorSet(sensor,'filter spectra',arriQE);
 %    sensor = sensorSet(sensor,'pixel voltage swing',1.2);
 %    sensor = sensorSet(sensor,'response type','linear'); % 'linear' or 'log'
 
+%% Build the sensor with no NIR blocking filter
+sensorIR = sensorCreate;
+sensorIR = sensorSet(sensorIR,'wave',wave);
+fov    = sceneGet(scene,'fov');
+sensorIR = sensorSetSizeToFOV(sensorIR,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
+
+fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
+arriQEwithIR = ieReadColorFilter(wave,fullFileName);
+sensorIR = sensorSet(sensorIR,'filter spectra',arriQEwithIR); 
+
+
 %%  We will set the parameters
 
 ip = ipCreate;
 
 
-%%  Get the sensor data from all nlights
+%%  Get the sensor data from all nlights for the case when the sensor has the NIR blocking filter on
 
 for ii=1:nLights
     
@@ -201,18 +212,24 @@ end
 % Add the special case for the 'irSonyLIght.mat' and the
 % 'ARRIestimatedSensorsNoNIRfilter.mat'
 
+%%  Get sensor data for Special case when the sensor has no NIR blocking filter and a IR light
+
+
+%% Combine the sensor data
+% By combining 3 sensors and 6 lights, we produce, in theory, 18 different spectral channels
+% Then we add 3 sensor channels created by the ARRI sensors, no NIR blocking filter, and one light (IR)
+% to create a total of 21 spectral channels
+
 
 
 %% Compute the reduced dimension of the sensor data
-% By combining 3 sensors and 6 lights, we produce, in theory, 18 different spectral channels
-% However, these spectral channels are correlated (i.e. not orthogonal)
+% These spectral channels are correlated (i.e. not orthogonal)
 % In order to quantify tissue discriminability using the Mahalanobis
 % distance metric, we need to map the spectral channels into an orthogonal
 % basis set.  
 
-
 % We can use the singular value decomposition to find a set of orthogonal
-% sensors such that each of the 18 channels can be described by a weighted
+% sensors such that each of the 21 channels can be described by a weighted
 % combination of the smaller set of orthogonal sensors 
 % 
 sensorLight = zeros(numel(wave),3,numel(Lights));
@@ -229,7 +246,7 @@ S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2)* 100;
 ieNewGraphWin; plot(percentV,'k', 'linewidth', 3) ; xlabel('Number of spectral basis functions'); ylabel('Percent Variance Accounted For');
 
-% Let's look at the weights on the 18 spectral channels to see which ones
+% Let's look at the weights on the 21 spectral channels to see which ones
 % are used and which ones have weights of 0
 % select the number of basis functions to use
 nBasis = 9; % for the multispectral case, 9 basis functions account for 100% of the variance
@@ -245,6 +262,7 @@ ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
     'R Sony 638nm', 'G Sony 638nm', 'B Sony 638nm', ...
     'R Sony 405nm', 'G Sony 405nm', 'B Sony 405nm'};
 
+% Add 'R SonyIR 808nm','G SonyIR 808n', 'B SonyIR 808nm'; 
 t = array2table(abs(thisBasis))
 f=figure;
 uit = uitable(f,'Data',table2cell(t));
@@ -303,7 +321,8 @@ for ss = 1:11
     end
 end
 
-%%
+%% create a tissue confusion matrix using the Mahalonobis distance
+
 ieNewGraphWin;
 imagesc(mahalMatrix); colormap(gray);
 % surf(mahalMatrix); colormap(gray);
