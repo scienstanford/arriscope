@@ -1,5 +1,5 @@
 
-%% s_arriSNR.m
+%% s_arriSNRwithIR.m
 % 
 % Purpose: calculate the SNR for each channel of a multispectral imaging system
 %
@@ -22,8 +22,9 @@
 %%
 % First, calculate the spectral radiance or a white target by multiplying the R, G and
 % B sensor spectral sensitivities with the light spectral energy
-wave = 400:10:700;
 
+%% for 6 lights and RGB sensors with NIR blocking filter
+wave = 400:10:900;
 % load the sensor spectral sensitivities
 arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadSpectra(arriSensorFname, wave);
@@ -35,14 +36,30 @@ testLights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',.
     'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
 
 % Multiply sensors and lights
-sensorLight = zeros(numel(wave),3,numel(testLights));
+%sensorLight = zeros(numel(wave),3,numel(testLights));
+
+sensorLight = zeros(numel(wave),3,7);
+
 for ii = 1:numel(testLights)
     thisLight = ieReadSpectra(testLights{ii},wave);
     sensorLight(:,:,ii) = diag(thisLight)*arriQE;
 end
 
+%%  for 1 light and RGB sensors with no NIR blocking filter
+% load the sensor spectral sensitivities
+arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
+arriQEwithIR = ieReadSpectra(arriSensorFname, wave);
+plotRadiance(wave,arriQEwithIR,'title','ARRI sensor quantum efficiency');
+
+% Multiply sensors and lights
+IRLight = ieReadSpectra('irSonyLIght.mat',wave);
+IRsensorLight(:,:,) = diag(IRLight)*arriQEwithIR;
+
+%% create sensorLight to be 51x21 matrix
+
+
 %% convert radiance to quanta
-x=reshape(sensorLight,31,18);
+x=reshape(sensorLight,51,21);
 Xphotons = Energy2Quanta(wave,x);
 Y = sum(Xphotons); %per square meter/sec
 Y = Y*1.0e-12; % per square micron/sec (assuming a 1 micron pixel)
