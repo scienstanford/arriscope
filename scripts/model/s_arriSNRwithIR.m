@@ -53,10 +53,11 @@ plotRadiance(wave,arriQEwithIR,'title','ARRI sensor quantum efficiency');
 
 % Multiply sensors and lights
 IRLight = ieReadSpectra('irSonyLIght.mat',wave);
-IRsensorLight(:,:,) = diag(IRLight)*arriQEwithIR;
+IRsensorLight(:,:) = diag(IRLight)*arriQEwithIR;
 
 %% create sensorLight to be 51x21 matrix
-
+ii = 7
+sensorLight(:,:,7) = IRsensorLight;
 
 %% convert radiance to quanta
 x=reshape(sensorLight,51,21);
@@ -88,7 +89,7 @@ chdir(fullfile(arriRootPath,'data','WhiteCalibration_CameraImage_ari'));
 
 % put in the same order as the test lights to match up
 rgbImages = {'WhiteCalibration_arriwhite17_fIRon.ari','WhiteCalibration_white17_fIRon.ari','WhiteCalibration_green17_fIRon.ari', ...
-  'WhiteCalibration_blue17_fIRon.ari','WhiteCalibration_red17_fIRon.ari','WhiteCalibration_violet17_fIRon.ari'};
+  'WhiteCalibration_blue17_fIRon.ari','WhiteCalibration_red17_fIRon.ari','WhiteCalibration_violet17_fIRon.ari','irSonyLIght.mat'};
 
 % not sure why we calculate this
 % rgbNoiseImages = {'WhiteCalibration_ambient_fIRoff.ari','WhiteCalibration_ambient_fIRon.ari'};
