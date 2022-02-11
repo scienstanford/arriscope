@@ -88,7 +88,6 @@ chdir(fullfile(arriRootPath,'data','WhiteCalibration_CameraImage_ari'));
 
 % put in the same order as the test lights to match up
 rgbImages = {'WhiteCalibration_arriwhite17_fIRon.ari','WhiteCalibration_white17_fIRon.ari','WhiteCalibration_green17_fIRon.ari', ...
-  'WhiteCalibration_blue17_fIRon.ari','WhiteCalibration_red17_fIRon.ari','WhiteCalibration_violet17_fIRon.ari','irSonyLIght.mat'};
 
 % not sure why we calculate this
 % rgbNoiseImages = {'WhiteCalibration_ambient_fIRoff.ari','WhiteCalibration_ambient_fIRon.ari'};
