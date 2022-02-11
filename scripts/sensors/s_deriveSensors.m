@@ -6,157 +6,132 @@
 % data 
 % 
 % Background
-%   We found that there may be other sensors that predict the RGB values 
-%   we captured in our calibration as well as the sensors we estimated in
-%   s_sensorEstimation.m
-%   We need a sensor that has QE in the NIR range
-%   So, we will pick a sensor (say the Sony sensor), scale it such that it
-%   has the same gain as the estimated sensors (again, see
-%   s_sensorEstimation.m)
-%   And then find a NIR blocking filter such that when we apply it to the
-%   scaled Sony sensor will produce a sensor with QE that predicts the MCC
-%   data
-
+%   We estimate the sensor QE in the ARRIscope (see s_sensorEstimation.m)
+%   There many by other sensor QE functions that are "equivalent" to the
+%   estimated QE in the sense that they predict the ARRIscope RGB values
+%   measured for the 24 patches illuminated by the 6 spectral lights.  
 %
-%   It appears that the estimated QE is very similar to the QE for the Sony
-%   and On Semiconductor sensors
-%   So, we use the Sony QE without the NIR blocking filter as the best
-%   guess for the ARRI Sensors without the NIR blocking filter, after
-%   accounting for the difference in sensor gain
+%   We do not have an estimate of the sensor QE with an NIR filter.
+%   We would like to have this estimate so that we can predict the
+%   ARRIScope RGB values for spectral reflectances > 700 nm
+%
+%   We pick the QE functions for a Sony sensor that is popular and very
+%   much like the spectral QE functions for a OnSemi sensor
+%   We first scale it so that the gains match the sensor QE functions we
+%   estimated for the ARRIscope (based on 24 patches illuminated by 6
+%   lights)
+%   Then, we apply an NIR blokcing filter that produces QE functions
+%   similar to the estimated sensors
+%   Then we determine how well this scaled and filtered QE function (again,
+%   derived from published QE functions for a Sony sensor) predict the ARRIscope 
+%   RGB values measured for the 24 patches illuminated by the 6 spectral lights.  
+%
 % 
 % see ARRIestimatedSensorsNoNIRfilter
 
+%% set the Matlab path
+%{
 cd /users/joyce/GitHub/isetcam/;
 addpath(genpath(pwd));
 cd /users/joyce/GitHub/arriscope/;
 addpath(genpath(pwd));
-
+%}
+%% set the range of wavelengths
 wave = 400:10:900;
+%% created the UVandIR filter
+%{
+ieNewGraphWin; plot(Data019(:,1),Data019(:,2));
+wavelength = Data019(:,1);
+data = Data019(:,2);
+comment = 'best guess at UV + NIR filter';
+ieSaveSpectralFile(wavelength,data,comment);
+%}
+%%  load in sensors 
+% see s_arriSensorEstimation) for details about how ARRIestimatedSensors was calculated
 
-%% 
 SonyIMX249SensorFname = fullfile(arriRootPath,'data','sensor','SonyIMX249.mat');
 SonyIMX249 = ieReadSpectra(SonyIMX249SensorFname, wave);
-
-ieNewGraphWin;
-maxS = max(max(SonyIMX249))
-plot(wave,SonyIMX249(:,1)/maxS,'r'); hold on;
-plot(wave,SonyIMX249(:,2)/maxS,'g');
-plot(wave,SonyIMX249(:,3)/maxS,'b');
-
-
 ARRIestimatedFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadSpectra(ARRIestimatedFname, wave);
-arriQEmax = max(max(arriQE))
-plot(wave,arriQE(:,1),'r--'); hold on;
-plot(wave,arriQE(:,2),'g--'); 
-plot(wave,arriQE(:,3),'b--'); 
 
+%% Scale the RGB gains of the Sony QE to match the RGB gains of the estimated sensor
 
-%% Scale the Sony sensor QE to match the gain in the estimated Sensor, 
-% and then use the scaled Sony sensors as a best guess for the spectral QE
-% without the NIR blocking filter
+scaledSonyR = SonyIMX249(:,1)/max(SonyIMX249(:,1)) * max(arriQE(:,1));
+scaledSonyG = SonyIMX249(:,2)/max(SonyIMX249(:,2)) * max(arriQE(:,2));
+scaledSonyB = SonyIMX249(:,3)/max(SonyIMX249(:,3)) * max(arriQE(:,3));
 ieNewGraphWin;
-plot(wave,arriQE(:,1),'r-'); hold on;
-plot(wave,arriQE(:,2),'g-'); 
-plot(wave,arriQE(:,3),'b-'); 
+plot(wave,scaledSonyR,'r'); hold on;
+plot(wave,scaledSonyG,'g');
+plot(wave,scaledSonyB,'b');
 
-% 
-red = SonyIMX249(:,1)/max(SonyIMX249(:,1)) * max(arriQE(:,1));
-green = SonyIMX249(:,2)/max(SonyIMX249(:,2)) * max(arriQE(:,2));
-blue = SonyIMX249(:,3)/max(SonyIMX249(:,3)) * max(arriQE(:,3));
-plot(wave,red,'r'); hold on;
-plot(wave,green,'g');
-plot(wave,blue,'b');
-% 
-% sensor = [red, green, blue];
-% comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors, we are using these as a best guess for the ARRI Sensor QE without the NIR blocking filter'
-% ieSaveSpectralFile(wave,sensor,comment);
+% perhaps we should save these as scaled Sony sensor QE functions
+%{
+sensor = [scaledSonyR, scaledSonyG, scaledSonyB];
+comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors,  ...
+we are using these as a best guess for the ARRI Sensor QE without the NIR blocking filter'
+ieSaveSpectralFile(wave,sensor,comment);
+%}
 
 % These plots simply show that the On Semiconductor sensor spectral QE are
 % close to the Sony Spectral QE
+%{
+OnSemiR = ieReadSpectra('OnSemiAR0521Red.mat',wave);
+OnSemiG = ieReadSpectra('OnSemiAR0521Green.mat',wave);
+OnSemiB = ieReadSpectra('OnSemiAR0521Blue.mat',wave);
+scaledOnSemiR = OnSemiR/max(OnSemiR(:))* max(arriQE(:,1));
+scaledOnSemiG = OnSemiG /max(OnSemiG (:))* max(arriQE(:,2));
+scaledOnSemiB = OnSemiB/max(blue(:))* max(arriQE(:,3));
+plot(wave,scaledOnSemiR,'r--');
+plot(wave,scaledOnSemiG,'g--');
+plot(wave,scaledOnSemiB,'b--');
+%}
 
-% red = ieReadSpectra('OnSemiAR0521Red.mat',wave);
-% green = ieReadSpectra('OnSemiAR0521Green.mat',wave);
-% blue = ieReadSpectra('OnSemiAR0521Blue.mat',wave);
-% plot(wave,red/max(red(:))* max(arriQE(:,1)),'r--');
-% plot(wave,green/max(green(:))* max(arriQE(:,2)),'g--');
-% plot(wave,blue/max(blue(:))* max(arriQE(:,3)),'b--');
+%% Filter the scaled Sony QE functions using a UVandIR filter
 
+filter = ieReadSpectra('UVandIR.mat',wave);
+filteredSonyR = scaledSonyR .* filter;
+filteredSonyG = scaledSonyG .* filter;
+filteredSonyB = scaledSonyB .* filter;
+ieNewGraphWin;
+plot(wave,filteredSonyR,'r'); hold on;
+plot(wave,filteredSonyG ,'g');
+plot(wave,filteredSonyB,'b');
 
+%% Filter the scaled OnSemi QE functions using a UVandIR filter
+% Perhaps we will see how well these functions do at predicting the
+% ARRIscope RGB values for 24 surfaces illuminated with 6 lights
+%{
+filteredOnSemiR = scaledOnSemiR .* filter;
+filteredOnSemiG = scaledOnSemiG .* filter;
+filteredOnSemiB = scaledOnSemiB .* filter;
+filteredSonyG = scaledSonyG .* filter;
+filteredSonyB = scaledSonyB .* filter;
+plot(wave,filteredOnSemiR,'r--'); hold on;
+plot(wave,filteredOnSemiG ,'g--');
+plot(wave,filteredOnSemiB,'b--');
+%}
 
 %%
+
+% TLCI are QE functions for a standard color camera model
+% We found that the scaled TLCI QE functions predict the ARRIscope RGB values (measured 
+% for the 24 patches illuminated by the 6 spectral lights) just as well as
+% the QE functions we estimated 
+% Here we compare the scaled TLCI QE functions to the scaled and filtered
+% Sony QE functions
+
+plot(wave,TLCIQE(:,1)/max(TLCIQE(:,1))* max(arriQE(:,1)),'r--'); hold on
+plot(wave,TLCIQE(:,2)/max(TLCIQE(:,2))* max(arriQE(:,2)),'g--');
+plot(wave,TLCIQE(:,3)/max(TLCIQE(:,3))* max(arriQE(:,3)),'b--');
+
+%%
+% will need to clean up the many different sensor QE functions we have in
+% data/sesnor
+% For example 
 % ARRISensorNIRoff.mat is the Sony sensor functions - not estimated
 % ARRISensorNIRon.mat is the estimated ARRI sensor functions - based on
-% image data captured when the MCC was illuminated with different lights
-% and the NIR blocking filter was on.
-% Unfortunately, we do not have image data captured when the MCC was illuminated with different lights
-% and the NIR blocking filter was off.
-% Hence, we do not have estimated ARRI sensors with NIR blocking filter off
 
-Fname = fullfile(arriRootPath,'data','sensor','ARRISensorNIRoff.mat');
-arriQE_NIRoff = ieReadSpectra(Fname, wave);
-
-Fname = fullfile(arriRootPath,'data','sensor','ARRISensorNIRon.mat');
-arriQE_NIRon = ieReadSpectra(Fname, wave);
-
-ieNewGraphWin;
-plot(wave,arriQE_NIRoff(:,1),'r'); hold on;
-plot(wave,arriQE_NIRoff(:,2),'g');
-plot(wave,arriQE_NIRoff(:,3),'b'); 
-
-plot(wave,arriQE_NIRon(:,1),'r--'); 
-plot(wave,arriQE_NIRon(:,2),'g--');
-plot(wave,arriQE_NIRon(:,3),'b--'); 
-
-plot(wave,arriQE(:,1),'r'); hold on;
-plot(wave,arriQE(:,2),'g'); 
-plot(wave,arriQE(:,3),'b'); 
-
-%%
-
-arriQE_NIRoff_r_scaled = ieScale(arriQE_NIRoff(:,1))*max(arriQE(:,1))
-plot(wave, arriQE_NIRoff_r_scaled,'r--'); 
-
-arriQE_NIRoff_g_scaled = ieScale(arriQE_NIRoff(:,2))*max(arriQE(:,2))
-plot(wave, arriQE_NIRoff_g_scaled,'g--');
-
-arriQE_NIRoff_b_scaled = ieScale(arriQE_NIRoff(:,3))*max(arriQE(:,3))
-plot(wave,arriQE_NIRoff_b_scaled,'b--'); 
-
-data = [arriQE_NIRoff_r_scaled,arriQE_NIRoff_g_scaled,arriQE_NIRoff_b_scaled];
-comment = "This is the arriQE_NIRoff sensor scaled to have the same gain as the estimated ARRI sensors";
-ieSaveSpectralFile(wave,data,comment);
+%% 
+% See how well the scaled and filtered Sony QE functions do at predicting the 24 patches illuminated by the 6 spectral lights
 
 
-%% TODO - find an NIR filter than maps scaled TLCIQE into ARRIestimatedSensorsNoNIRfilter.mat
-% if the scaled TLCI sensors do as well as the estimated ARRI sensors at predicting the MCC data, then
-% use the scaled TLCI sensors - since the color crosstalk is less and
-% comparable to the scaled Sony QE (i.e.
-% ARRIestimatedSensorsNoNIRfilter.mat)
-% then, find an NIR filter that when applied to the
-% ARRIestimatedSensorsNoNIRfilter.mat we get something close to the scaled
-% TLCI sensors 
-% Finally, test whether the scaled Sony QE * NIR filer predicts the MCC
-% data as well as the estimated ARRI Sensors
-TLCISensorFname = fullfile(arriRootPath,'data','sensor','TLCIsensors.mat');
-TLCIQE = ieReadSpectra(TLCISensorFname, wave);
-ieNewGraphWin;
-plot(wave,TLCIQE(:,1)/max(TLCIQE(:,1))* max(arriQE(:,1)),'r--'); hold on
-plot(wave,TLCIQE(:,2)/max(TLCIQE(:,2))* max(arriQE(:,2)),'g--');
-plot(wave,TLCIQE(:,3)/max(TLCIQE(:,3))* max(arriQE(:,3)),'b--');
-
-arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
-arriQEwithIR = ieReadSpectra(arriSensorFname, wave);
-plot(wave,arriQEwithIR(:,1),'r'); 
-plot(wave,arriQEwithIR(:,2),'g');
-plot(wave,arriQEwithIR(:,3),'b');
-
-
-%%
-ieNewGraphWin;
-plot(wave,TLCIQE(:,1)/max(TLCIQE(:,1))* max(arriQE(:,1)),'r--'); hold on
-plot(wave,TLCIQE(:,2)/max(TLCIQE(:,2))* max(arriQE(:,2)),'g--');
-plot(wave,TLCIQE(:,3)/max(TLCIQE(:,3))* max(arriQE(:,3)),'b--');
-plot(wave,arriQE(:,1),'r'); 
-plot(wave,arriQE(:,2),'g');
-plot(wave,arriQE(:,3),'b');
