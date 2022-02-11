@@ -56,7 +56,6 @@ IRLight = ieReadSpectra('irSonyLIght.mat',wave);
 IRsensorLight(:,:) = diag(IRLight)*arriQEwithIR;
 
 %% create sensorLight to be 51x21 matrix
-ii = 7
 sensorLight(:,:,7) = IRsensorLight;
 
 %% convert radiance to quanta
@@ -138,7 +137,7 @@ end
 
 %% Plot SNR as function of mRGB
 
-mRGBv=reshape(mRGB',1,18);
+mRGBv=reshape(mRGB',1,21);
 ieNewGraphWin;
 plot(mRGBv,SNRdb,'r*');
 % p = polyfit(mRGBv,SNRdb,1);
