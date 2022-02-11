@@ -36,6 +36,9 @@
 % ARRISensorNIRon.mat is the estimated ARRI sensor functions - based on
 %
 % will need to save ScaledSony and FilteredAndScaledSony 
+
+% redo this removing the UV light which only contributes noise
+
 %% set the Matlab path
 %{
 cd /users/joyce/GitHub/isetcam/;
