@@ -19,6 +19,12 @@
 %   We then calculate channel SNR using the formula SNR = 20 * log10(Y./(Y.^0.5)) 
 %
 % JEF 04/27/2020
+%{
+cd /users/joyce/GitHub/isetcam;
+addpath(genpath(pwd));
+cd /users/joyce/GitHub/arriscope;
+addpath(genpath(pwd));
+%}
 %%
 % First, calculate the spectral radiance or a white target by multiplying the R, G and
 % B sensor spectral sensitivities with the light spectral energy
@@ -28,9 +34,10 @@ wave = 400:10:900;
 % load the sensor spectral sensitivities
 arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadSpectra(arriSensorFname, wave);
-plotRadiance(wave,arriQE,'title','ARRI sensor quantum efficiency');
+% plotRadiance(wave,arriQE,'title','ARRI sensor quantum efficiency');
 
-% Load the lights  
+% Load the lights 
+% TODO - delete violetSonyLight.mat ??
 
 testLights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
     'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
@@ -49,7 +56,7 @@ end
 % load the sensor spectral sensitivities
 arriSensorFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
 arriQEwithIR = ieReadSpectra(arriSensorFname, wave);
-plotRadiance(wave,arriQEwithIR,'title','ARRI sensor quantum efficiency');
+% plotRadiance(wave,arriQEwithIR,'title','ARRI sensor quantum efficiency');
 
 % Multiply sensors and lights
 IRLight = ieReadSpectra('irSonyLIght.mat',wave);
@@ -57,6 +64,53 @@ IRsensorLight(:,:) = diag(IRLight)*arriQEwithIR;
 
 %% create sensorLight to be 51x21 matrix
 sensorLight(:,:,7) = IRsensorLight;
+%% First, plot the lights
+ieNewGraphWin;
+for ii = 1:numel(testLights)
+    thisLight = ieReadSpectra(testLights{ii},wave);
+  plot(wave,thisLight); hold on;
+end
+plot(wave,IRLight);
+xlabel('Wavelength (nm)');
+ylabel('Energy (quanta/nm/sec/sr/m^2)');
+
+%% Second, plot the sensors
+%TODO - select sensors that predict the MCC data and have the same QE
+%between 400 and 700 nm
+ieNewGraphWin;
+plot(wave,arriQE(:,1),'r'); hold on;
+plot(wave,arriQE(:,2),'g'); hold on;
+plot(wave,arriQE(:,3),'b'); hold on;
+plot(wave,arriQEwithIR(:,1),'r--'); hold on;
+plot(wave,arriQEwithIR(:,2),'g--'); hold on;
+plot(wave,arriQEwithIR(:,3),'b--'); hold on;
+
+%% Third, plot sensor * light
+ieNewGraphWin;
+plot(wave,sensorLight(:,1,1),'r');hold on;
+plot(wave,sensorLight(:,2,1),'g');
+plot(wave,sensorLight(:,3,1),'b');
+plot(wave,sensorLight(:,1,2),'r')
+plot(wave,sensorLight(:,2,2),'g')
+plot(wave,sensorLight(:,3,2),'b')
+plot(wave,sensorLight(:,1,3),'r');
+plot(wave,sensorLight(:,2,3),'g');
+plot(wave,sensorLight(:,3,3),'b');
+plot(wave,sensorLight(:,1,4),'r')
+plot(wave,sensorLight(:,2,4),'g')
+plot(wave,sensorLight(:,3,4),'b')
+plot(wave,sensorLight(:,1,5),'r');
+plot(wave,sensorLight(:,2,5),'g');
+plot(wave,sensorLight(:,3,5),'b');
+plot(wave,sensorLight(:,1,6),'r')
+plot(wave,sensorLight(:,2,6),'g')
+plot(wave,sensorLight(:,3,6),'b')
+plot(wave,sensorLight(:,1,6),'r')
+plot(wave,sensorLight(:,2,6),'g')
+plot(wave,sensorLight(:,3,6),'b')
+plot(wave,sensorLight(:,1,7),'r--')
+plot(wave,sensorLight(:,2,7),'g--')
+plot(wave,sensorLight(:,3,7),'b--')
 
 %% convert radiance to quanta
 x=reshape(sensorLight,51,21);
