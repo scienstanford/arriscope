@@ -31,7 +31,6 @@ plot(wave,SonyIMX249(:,3)/maxS,'b');
 
 ARRIestimatedFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadSpectra(ARRIestimatedFname, wave);
-arriQEmax = max(max(arriQE))
 plot(wave,arriQE(:,1),'r--'); hold on;
 plot(wave,arriQE(:,2),'g--'); 
 plot(wave,arriQE(:,3),'b--'); 

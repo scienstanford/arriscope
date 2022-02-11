@@ -1,5 +1,9 @@
 %% a_arriConfusionMatrixWithIR.m 
 %
+%%%%% TODO %%%% - need to change spectral reflectances to include NIR data
+% so need to use different reflectances
+% see data from Langhout
+
 % Purpose:
 %   Quantify the discriminability between two tissue types based on the
 %   difference in camera RGB values captured when illuminated by N lights
@@ -63,6 +67,12 @@
 %
 % JEF/BAW
 %%
+%{
+cd /users/joyce/Github/isetcam;
+addpath(genpath(pwd));
+cd /users/joyce/Github/arriscope;
+addpath(genpath(pwd));
+%}
 ieInit
 
 %% Select the number of lights
@@ -155,14 +165,14 @@ sensor = sensorSet(sensor,'filter spectra',arriQE);
 %    sensor = sensorSet(sensor,'response type','linear'); % 'linear' or 'log'
 
 %% Build the sensor with no NIR blocking filter
-sensorIR = sensorCreate;
-sensorIR = sensorSet(sensorIR,'wave',wave);
-fov    = sceneGet(scene,'fov');
-sensorIR = sensorSetSizeToFOV(sensorIR,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
-
-fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
-arriQEwithIR = ieReadColorFilter(wave,fullFileName);
-sensorIR = sensorSet(sensorIR,'filter spectra',arriQEwithIR); 
+% sensorIR = sensorCreate;
+% sensorIR = sensorSet(sensorIR,'wave',wave);
+% fov    = sceneGet(scene,'fov');
+% sensorIR = sensorSetSizeToFOV(sensorIR,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
+% 
+% fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
+% arriQEwithIR = ieReadColorFilter(wave,fullFileName);
+% sensorIR = sensorSet(sensorIR,'filter spectra',arriQEwithIR); 
 
 
 %%  We will set the parameters
@@ -172,8 +182,7 @@ ip = ipCreate;
 
 %%  Get the sensor data from all nlights for the case when the sensor has the NIR blocking filter on
 
-for ii=1:nLights
-    
+for ii=1:nLights  
     % Set the light
     ThisLight = ieReadSpectra(Lights{ii},wave);
     % ieNewGraphWin; plot(wave,ThisLight);
@@ -190,7 +199,7 @@ for ii=1:nLights
     oi     = oiCompute(oi,sceneThisLight);
     sensor = sensorCompute(sensor,oi);
     ip     = ipCompute(ip,sensor);
-    % ipWindow(ip);
+    ipWindow(ip);
     
     if ii==1
         cp = chartCornerpoints(ip,true);
@@ -209,8 +218,52 @@ for ii=1:nLights
     
 end
 
-% Add the special case for the 'irSonyLIght.mat' and the
+%% Add the special case for the 'irSonyLIght.mat' and the
 % 'ARRIestimatedSensorsNoNIRfilter.mat'
+% Set the light
+    ThisLight = ieReadSpectra(Light808{1},wave);
+    % ieNewGraphWin; plot(wave,ThisLight);
+    sceneThisLight = sceneAdjustIlluminant(scene,ThisLight);
+    % sceneThisLight = sceneSet(sceneThisLight,'name','Reflectance Chart');
+    % sceneWindow(sceneThisLight);
+    
+    % Put a spatial pattern on the illuminant.
+    sceneThisLight = sceneIlluminantSS(sceneThisLight,pattern);
+    
+    % set sensor to be 'ARRIestimatedSensorsNoNIRfilter.mat'
+sensor = sensorCreate;
+sensor = sensorSet(sensor,'wave',wave);
+fov    = sceneGet(scene,'fov');
+sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
+
+fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
+arriQE = ieReadColorFilter(wave,fullFileName);
+sensor = sensorSet(sensor,'filter spectra',arriQE); 
+
+    % The chart parameters are attached to the scene object
+    % sceneGet(sceneThisLight,'chart parameters')
+    % sceneWindow(sceneThisLight);
+    oi     = oiCompute(oi,sceneThisLight);
+    sensor = sensorCompute(sensor,oi);
+    ip     = ipCompute(ip,sensor);
+    ipWindow(ip);
+    
+    if ii==1
+        cp = chartCornerpoints(ip,true);
+        [rects,mLocs,pSize] = chartRectangles(cp,rPatch,cPatch,0.5);
+        rectHandles = chartRectsDraw(ip,rects);
+        fullData = true;
+        data = cell(rPatch*cPatch,1);
+        % delete(rectHandles);
+    end
+    
+    % Get the data and assign it
+    thisLightData = chartPatchData(ip,mLocs,(pSize(1)/2),fullData);
+    for pp=1:numel(thisLightData)
+        data{pp} = [data{pp},thisLightData{pp}];
+    end
+    
+
 
 %%  Get sensor data for Special case when the sensor has no NIR blocking filter and a IR light
 
