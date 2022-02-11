@@ -1,7 +1,22 @@
-%% s_compareSensors.m
+%% s_deriveSensors.m
 %
-%  This script compared the QE of different sensors with the estimated QE
-%  for the ARRI sensor
+% The goal of this script is to find sensor that includes QE in the NIR
+% range and an NIR filter such that the multiplication of the NIR filter
+% with the sensorQE produces a quantum efficiency that predicts the MCC
+% data 
+% 
+% Background
+%   We found that there may be other sensors that predict the RGB values 
+%   we captured in our calibration as well as the sensors we estimated in
+%   s_sensorEstimation.m
+%   We need a sensor that has QE in the NIR range
+%   So, we will pick a sensor (say the Sony sensor), scale it such that it
+%   has the same gain as the estimated sensors (again, see
+%   s_sensorEstimation.m)
+%   And then find a NIR blocking filter such that when we apply it to the
+%   scaled Sony sensor will produce a sensor with QE that predicts the MCC
+%   data
+
 %
 %   It appears that the estimated QE is very similar to the QE for the Sony
 %   and On Semiconductor sensors
