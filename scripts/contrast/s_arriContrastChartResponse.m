@@ -122,12 +122,12 @@ pattern = [];
 % Calculate an optical image (see assumptions about the optics in oiCreate;
 oi = oiCreate;
 oi = oiCompute(oi,scene);
-
+oiWindow(oi);
 %% Build the sensor 
 
 sensor = arriSensorCreate;
 fov    = sceneGet(scene,'fov');
-sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],scene,oi);
+sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
 % For the white light the sensor is saturated at 3 ms 
 % Selected this exposure duration so that the RGB image captured under the ARRI White light would not saturate
     % sensor = sensorSet(sensor,'exp time',0.003); 
@@ -158,7 +158,7 @@ ip = ipCreate;
 % Needed so that illuminant levels are not changed by sceneAdjustIlluminant
 preserveMean = false;
 for ii=1:nLights
-    
+
     % Set the light
     ThisLight = ieReadSpectra(Lights{ii},wave);
     % ieNewGraphWin; plot(wave,ThisLight);
@@ -178,11 +178,14 @@ for ii=1:nLights
     sensorWindow(sensor); % plot any horizontal line in units of electrons
     % and see that the sensor does not saturate
     ip     = ipCompute(ip,sensor);
-    % ipWindow(ip);
-    
+    %%
+    ipWindow(ip); % why does this have NaN?
+    %%
+
     if ii==1
         cp = chartCornerpoints(ip,true);
         [rects,mLocs,pSize] = chartRectangles(cp,rPatch,cPatch,0.5);
+        ipWindow(ip);
         rectHandles = chartRectsDraw(ip,rects);
         fullData = true;
         data = cell(rPatch*cPatch,1);

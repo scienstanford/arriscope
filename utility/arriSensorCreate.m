@@ -133,7 +133,7 @@ wave = sensorGet(sensor,'wave');
 % fullFileName = fullfile(isetRootPath,'data','sensor','colorfilters','NikonD100.mat');
 % fullFileName = fullfile(jedeyeRootPath,'data','Sensors','SensorSpectralCurves4LeftCamera.mat');
 %
-fullFileName = which('TLCIsensors.mat');
+fullFileName = which('FilteredAndScaledSonyQE.mat');
 arriQE = ieReadColorFilter(wave,fullFileName);
 sensor = sensorSet(sensor,'filter spectra',arriQE);  
 % [data,filterNames] = ieReadColorFilter(wave,fullFileName); 

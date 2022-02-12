@@ -1,4 +1,4 @@
-%% a_arriConfusionMatrixWithIR.m 
+%% a_arriConfusionMatrixIR.m 
 %
 % Purpose:
 %   Quantify the discriminability between two tissue types based on the
@@ -7,15 +7,14 @@
 %   This is a modification of s_arriContrastChart -  here, we add the
 %   predictions for the 3 additional spectral channels created by the
 %   RGB sensors when there was no NIR blocking filter and the 808 nm light
+% 
+%   We need to use spectral reflectances that have energy into the IR
 %
 % Method:
 %   Step One: Create a scene that represents the spectral reflectance of
-%   different tissue types.  To do this, we create a spectral reflectance
-%   chart that represents the 11 different tissue types in several randomly
-%   selected positions.  The multiple positions of the same tissue will
-%   allow us to assess the difference in sensor response due to different
-%   sources of noise 
-%   (The main source of noise is photon noise, but there could be read noise, etc.).
+%   different tissue types.  We need to use spectrl reflectances that have
+%   energy beyond 700 nm. We will use the data from Langhout et al and only
+%   predict discriminability of nerve versus salivary gland
 %
 %   Step Two: Create a set of spectral channels by multiplying the spectral
 %   sensitivities of the 3 RGB sensors with the spectral energy in the N
@@ -82,6 +81,7 @@ Light808 = {'irSonyLIght.mat'}
 
 nLights = numel(Lights);
 %% Default scene
+% change this to be 
 
 sFiles = cell(1,1);
 sFiles{1} = which('tissueReflectances.mat');

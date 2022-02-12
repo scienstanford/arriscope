@@ -37,7 +37,7 @@
 %
 % will need to save ScaledSony and FilteredAndScaledSony 
 
-% redo this removing the UV light which only contributes noise
+% redo this removing the UV light which only contributes noise - did this, no differences
 
 %% set the Matlab path
 %{
@@ -63,9 +63,10 @@ SonyIMX249SensorFname = fullfile(arriRootPath,'data','sensor','SonyIMX249.mat');
 SonyIMX249 = ieReadSpectra(SonyIMX249SensorFname, wave);
 ARRIestimatedFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
 arriQE = ieReadSpectra(ARRIestimatedFname, wave);
+ 
 
 %% Scale the RGB gains of the Sony QE to match the RGB gains of the estimated sensor
-
+%{
 scaledSonyR = SonyIMX249(:,1)/max(SonyIMX249(:,1)) * max(arriQE(:,1));
 scaledSonyG = SonyIMX249(:,2)/max(SonyIMX249(:,2)) * max(arriQE(:,2));
 scaledSonyB = SonyIMX249(:,3)/max(SonyIMX249(:,3)) * max(arriQE(:,3));
@@ -73,14 +74,17 @@ ieNewGraphWin;
 plot(wave,scaledSonyR,'r'); hold on;
 plot(wave,scaledSonyG,'g');
 plot(wave,scaledSonyB,'b');
+plot(wave,arriQE(:,1),'r--');
+plot(wave,arriQE(:,2),'g--');
+plot(wave,arriQE(:,3),'b--');
 
 ScaledSony = [scaledSonyR,scaledSonyG,scaledSonyB]; % save this if we like it.
+%}
 
-% perhaps we should save these as scaled Sony sensor QE functions
+% we saved this as ScaledSony
 %{
 sensor = [scaledSonyR, scaledSonyG, scaledSonyB];
-comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors,  ...
-we are using these as a best guess for the ARRI Sensor QE without the NIR blocking filter'
+comment = 'spectral QE for the SonyM249 scaled to have the same gain as the arriEstimated Sensors,we are using these as a best guess for the ARRI Sensor QE without the NIR blocking filter'
 ieSaveSpectralFile(wave,sensor,comment);
 %}
 
@@ -99,7 +103,7 @@ plot(wave,scaledOnSemiB,'b--');
 %}
 
 %% Filter the scaled Sony QE functions using a UVandIR filter
-
+%{
 filter = ieReadSpectra('UVandIR.mat',wave);
 filteredSonyR = scaledSonyR .* filter;
 filteredSonyG = scaledSonyG .* filter;
@@ -109,6 +113,8 @@ plot(wave,filteredSonyR,'r'); hold on;
 plot(wave,filteredSonyG ,'g');
 plot(wave,filteredSonyB,'b');
 FilteredAndScaledSony = [filteredSonyR,filteredSonyG,filteredSonyB];
+%}
+% we saved this as FilteredAndScaledSony.mat
 %{
 wavelength = 400:10:900;
 data = FilteredAndScaledSony;
@@ -132,7 +138,9 @@ plot(wave,filteredOnSemiB,'b--');
 
 %% 
 % See how well the scaled and filtered Sony QE functions do at predicting the 24 patches illuminated by the 6 spectral lights
-%% measured RGB values
+%% measured RGB values saves as mRGB.mat
+mRGBfilename = fullfile(arriRootPath,'data','macbethColorChecker','mRGB.mat');
+load(mRGBfilename,'mRGB');
 % Get the mean RGB values for the MCC chart illuminated by 6 lights
 % Display the raw camera images captured by the ARRIScope camera with the
 % NIR filter on for each of the 6 lights
@@ -140,6 +148,8 @@ plot(wave,filteredOnSemiB,'b--');
 % under each of the 6 lights
 % Notice that the raw camera image captured under violet17 has very little
 % signal and is, therefore, noisy
+% just do this once and store results
+%{
 chdir(fullfile(arriRootPath,'data','macbethColorChecker','MacbethIRON'));
 rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
     'MacbethCc_red17_fIRon.ari', 'MacbethCc_violet17_fIRon.ari', ...
@@ -147,7 +157,7 @@ rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
 ip = ipCreate;
 ip = ipSet(ip,'correction method illuminant','none');
 ip = ipSet(ip,'conversion method sensor','none');
-%{
+
  img = arriRead(rgbImages{end},'image','left');
  ieNewGraphWin;
  imagescRGB(img);
@@ -163,6 +173,7 @@ ip = ipSet(ip,'conversion method sensor','none');
  [thisRGB,~,~,cornerPoints] = macbethSelect(ip,showSelection,fullData);
 %}
 
+%{
 showSelection = true;   % Do or do not bring up the window
 fullData      = false;  % Just returns the mean in each patch
 cornerPoints = [
@@ -179,6 +190,11 @@ for ii=1:numel(rgbImages)
     thisRGB = macbethSelect(ip,showSelection,fullData,cornerPoints);
     mRGB = [mRGB; thisRGB];
 end
+
+mRGBfilename = fullfile(arriRootPath,'data','macbethColorChecker','mRGB.mat');
+save(mRGBfilename,'mRGB');
+
+%}
 
 %% Predicted RGB values
 wave = 400:10:700;

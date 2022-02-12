@@ -308,32 +308,6 @@ ylabel('RGB values measured by ARRI sensors');
 
 % The Standard TLCI Camera model seems to be a very good fit for the data.
 
-%% Multiply the sensors with the light to define the sensitivity of the spectral channels
-% We expect the blue light * red sensor to not produce a signal - i.e. not
-% a meaningful channel
-
-sensorLight = zeros(numel(wave),3,numel(testLights));
-for ii = 1:numel(testLights)
-    thisLight = ieReadSpectra(testLights{ii},wave);
-    sensorLight(:,:,ii) = diag(thisLight)*estimatedFilters;
-end
-
-
-ieNewGraphWin;
-area = zeros(3,numel(testLights));
-for ii=1:numel(testLights)
-    plot(wave,sensorLight(:,:,ii))
-    hold on;
-    testLight(ii)
-    area(:,ii) = sum(sensorLight(:,:,ii))';
-end
-
-
-
-testLights
-area
-% ieNewGraphWin; surf(area)
-
 
 %%
 % Ask Henryk for some help with this.
