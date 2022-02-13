@@ -176,7 +176,7 @@ end
 %}
 %% Plot the predicted number of photons captured by a 1 micron pixel in 30 msec versus mRGB
 % The number of photons are linearly related to digital values 
-%{
+
 ieNewGraphWin;
 p = polyfit(mRGBv,Y,1);
 x1 =linspace(1,3.3956e+03,100);
@@ -188,7 +188,7 @@ xlabel('Sensor Digital Value');
 ylabel('Number of Photons/1 micron pixel/30 msec');
 %}
 
-% Digital values increase linearly with the function of number of photons
+% change this to plot digital values as a function of number of photons
 ieNewGraphWin;
 x = Y;
 y = mRGBv;
@@ -199,9 +199,25 @@ y1 = polyval(p,x1);
 plot(x,y,'o'); hold on;
 plot(x1,y1);
 hold off;
-ylabel('Sensor Digital Value');
-xlabel('Number of Photons/1 micron pixel/30 msec');
+xlabel('Sensor Digital Value');
+ylabel('Number of Photons/1 micron pixel/30 msec');
 
+%
+%     % Fit a polynomial p of degree 1 to the (x,y) data:
+%       x = 1:50;
+%       y = -0.3*x + 2*randn(1,50);
+%       p = polyfit(x,y,1);
+%
+%     % Evaluate the fitted polynomial p and plot:
+%       f = polyval(p,x);
+%       plot(x,y,'o',x,f,'-')
+%       legend('data','linear fit')
+%
+
+%{
+ieNewGraphWin;
+plot(log10(mRGBv),log10(Y),'r*');
+%}
 %% Plot SNR as function of mRGB
 % note that this figure looks different if I do not include the IR condition
 mRGBv=reshape(mRGB',1,21);

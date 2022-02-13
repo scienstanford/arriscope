@@ -12,3 +12,6 @@ scripts/contrast/s_arriConfusionMatrixWithIR.asv
 scripts/contrast/s_arriConfusionMatrixWithIR.asv
 *.m
 scripts/sensors/s_deriveSensors.asv
+data/.DS_Store
+data/.DS_Store
+scripts/.DS_Store
