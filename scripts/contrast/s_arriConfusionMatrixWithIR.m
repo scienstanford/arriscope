@@ -1,17 +1,28 @@
 %% a_arriConfusionMatrixWithIR.m 
 %
-%%%%% TODO %%%% - need to change spectral reflectances to include NIR data
-% so need to use different reflectances
-% see data from Langhout
 
 % Purpose:
-%   Quantify the discriminability between two tissue types based on the
-%   difference in camera RGB values captured when illuminated by N lights
-%
-%   This is a modification of s_arriContrastChart -  here, we add the
-%   predictions for the 3 additional spectral channels created by the
-%   RGB sensors when there was no NIR blocking filter and the 808 nm light
-%
+% The purpose of this script is to calculate the discriminability of
+% reflectances of muscle, nerve, nearNerve, and fat (data from Langhout et
+% al 2018) using a sensor that has no UV or NIR blocking filter
+
+% Background: 
+% in s_arriTissueConfusionMatrix.m we calculated a confusion matrix for
+% tissue reflectances published by Stezle et al.
+% We could not consider the effect of the IR (808 nm light) and RGB sensors
+% with no NIR filter because we did not have tissue reflectances measured
+% in beyond 640 nm
+% Until we can find tissue reflectance data that includes wavelengths up to
+% 900 nm, we cannot calculate a tissue confusion matrix for these tisues
+% and for the case when the RGB sensors did not have an NIR blocking filter
+% 
+% Langhout et al 2018 published spectral reflectance data for nerve and fat
+% see figure 2 in Langhout GC, Kuhlmann KFD, Schreuder P, et al ...
+% In vivo nerve identification  in head and neck surgery using diffuse reflectance spectroscopy ... 
+% Laryngoscope Investig Otolaryngol. 2018;3(5):349-355 Published 2018 Aug 9. doi:10.1002/lio2.174 '
+% We will use this data and simulate the special case where the ARRI
+% sensors do not have an NIR blocking filter 
+
 % Method:
 %   Step One: Create a scene that represents the spectral reflectance of
 %   different tissue types.  To do this, we create a spectral reflectance
@@ -82,34 +93,40 @@ ieInit
 % Second, we do not have reflectance data for wavelengths > 640 nm 
 % Both of these limitations can be corrected in the future
 % 
+Lights = {'irSonyLIght.mat'};
+%{
 Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
-    'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
-Light808 = {'irSonyLIght.mat'}
-% Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
-%     'blueSonyLight.mat','redSonyLight.mat'};
+    'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat','irSonyLIght.mat'};
 
-% Lights = {'whiteARRILight.mat'};
+{Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
+    'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat','irSonyLIght.mat'};
+Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
+    'blueSonyLight.mat','redSonyLight.mat'};
+
+Lights = {'whiteARRILight.mat'};
+%}
 
 nLights = numel(Lights);
 %% Default scene
 
-sFiles = cell(1,1);
-sFiles{1} = which('tissueReflectances.mat');
-% sFiles{1} = which('tissueScaled.mat');
-% [t,w, comment] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
-
-% The number of samples from each of the data sets, respectively
-sSamples{1} = repmat(1:11,1,5);    %
-% sSamples{1} = repmat(1:11,1,8);  
-
 % How many row/col spatial samples in each patch (they are square)
 pSize    = 24;           % Patch size
-wave     = 400:10:640;   % Whatever is in the reflectance data file
+wave     = 400:10:900;   % Whatever is in the reflectance data file
 grayFlag = 0;            % Gray strip
 sampling = 'no replacement';
 
+sFiles = cell(1,1);
+sFiles{1} = 'Langhout2018Fig2.mat';
+% sFiles{1} = which('tissueScaled.mat');
+% [t,w, comment] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
+[t,w, comment] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t);
+
+% The number of samples from each of the data sets, respectively
+sSamples{1} = repmat(1:4,1,4);    %
+% sSamples{1} = repmat(1:11,1,8);  
+
 scene = sceneCreate('reflectance chart',pSize,sSamples,sFiles,wave,grayFlag,sampling);
-scene = sceneSet(scene,'name','Pig tissues');
+scene = sceneSet(scene,'name','Nerve and Fat');
 chartP = sceneGet(scene,'chart parameters');
 rPatch = chartP.rowcol(1); cPatch = chartP.rowcol(2);
 
@@ -150,7 +167,7 @@ sensor = sensorSet(sensor,'wave',wave);
 fov    = sceneGet(scene,'fov');
 sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
 
-fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
+fullFileName = fullfile(arriRootPath,'data','sensor','ScaledSony.mat');
 arriQE = ieReadColorFilter(wave,fullFileName);
 sensor = sensorSet(sensor,'filter spectra',arriQE); 
 
@@ -218,55 +235,6 @@ for ii=1:nLights
     
 end
 
-%% Add the special case for the 'irSonyLIght.mat' and the
-% 'ARRIestimatedSensorsNoNIRfilter.mat'
-% Set the light
-    ThisLight = ieReadSpectra(Light808{1},wave);
-    % ieNewGraphWin; plot(wave,ThisLight);
-    sceneThisLight = sceneAdjustIlluminant(scene,ThisLight);
-    % sceneThisLight = sceneSet(sceneThisLight,'name','Reflectance Chart');
-    % sceneWindow(sceneThisLight);
-    
-    % Put a spatial pattern on the illuminant.
-    sceneThisLight = sceneIlluminantSS(sceneThisLight,pattern);
-    
-    % set sensor to be 'ARRIestimatedSensorsNoNIRfilter.mat'
-sensor = sensorCreate;
-sensor = sensorSet(sensor,'wave',wave);
-fov    = sceneGet(scene,'fov');
-sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
-
-fullFileName = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensorsNoNIRfilter.mat');
-arriQE = ieReadColorFilter(wave,fullFileName);
-sensor = sensorSet(sensor,'filter spectra',arriQE); 
-
-    % The chart parameters are attached to the scene object
-    % sceneGet(sceneThisLight,'chart parameters')
-    % sceneWindow(sceneThisLight);
-    oi     = oiCompute(oi,sceneThisLight);
-    sensor = sensorCompute(sensor,oi);
-    ip     = ipCompute(ip,sensor);
-    ipWindow(ip);
-    
-    if ii==1
-        cp = chartCornerpoints(ip,true);
-        [rects,mLocs,pSize] = chartRectangles(cp,rPatch,cPatch,0.5);
-        rectHandles = chartRectsDraw(ip,rects);
-        fullData = true;
-        data = cell(rPatch*cPatch,1);
-        % delete(rectHandles);
-    end
-    
-    % Get the data and assign it
-    thisLightData = chartPatchData(ip,mLocs,(pSize(1)/2),fullData);
-    for pp=1:numel(thisLightData)
-        data{pp} = [data{pp},thisLightData{pp}];
-    end
-    
-
-
-%%  Get sensor data for Special case when the sensor has no NIR blocking filter and a IR light
-
 
 %% Combine the sensor data
 % By combining 3 sensors and 6 lights, we produce, in theory, 18 different spectral channels
@@ -302,12 +270,14 @@ ieNewGraphWin; plot(percentV,'k', 'linewidth', 3) ; xlabel('Number of spectral b
 % Let's look at the weights on the 21 spectral channels to see which ones
 % are used and which ones have weights of 0
 % select the number of basis functions to use
-nBasis = 9; % for the multispectral case, 9 basis functions account for 100% of the variance
-% nBasis = 3;
+%nBasis = 9; % for the multispectral case, 9 basis functions account for 100% of the variance
+ nBasis = 3;
 
 thisBasis = U(:,1:nBasis);
 % ieNewGraphWin; surf(abs(thisBasis));colormap(gray);
 imagesc(abs(thisBasis)); colormap(gray); set(gca,'ColorScale','log'); axis image; colorbar;
+
+%{
 ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
     'R Sony white', 'G Sony white', 'B Sony white', ...
     'R Sony 525nm', 'G Sony 525nm', 'B Sony 525nm', ...
@@ -320,7 +290,7 @@ t = array2table(abs(thisBasis))
 f=figure;
 uit = uitable(f,'Data',table2cell(t));
 uit.RowName = ChannelName;
-
+%}
 
 %%
 
@@ -355,16 +325,16 @@ legend(ChannelName);
 xlabel('Wavelength (nm)');
 %}
 
-%% Could loop on the 11 surfaces
+%% Could loop on the 4 surfaces
 
 % Now with the new "virtual sensors" we predict the RGB values 
 
-mahalMatrix = zeros(11,11);
-for ss = 1:11
+mahalMatrix = zeros(4,4);
+for ss = 1:4
     these = find(sSamples{1} == ss);
     X = []; for tt=1:length(these), X = [X;data{these(tt)}];end
     X = X*thisBasis;
-    for ii=ss:11
+    for ii=ss:4
         these = find(sSamples{1} == ii);
         Y = []; 
         for tt=1:length(these), Y = [Y;data{these(tt)}];end
@@ -379,11 +349,12 @@ end
 ieNewGraphWin;
 imagesc(mahalMatrix); colormap(gray);
 % surf(mahalMatrix); colormap(gray);
-
 % fig = uifigure;
 % uit=uitable(fig,'Data',mahalMatrix);
 
-TissueType = {'Cancellous Bone','Cortical Bone','Fat','Hard Bone','Mucosa','Muscle','Nerve','Nerve','Salivary Gland','Skin','Soft Bone'};
+TissueType = {'Muscle','NearNerve','Nerve','Subcutaneous Fat'};
+% fig = uifigure;
+% TissueType = {'Cancellous Bone','Cortical Bone','Fat','Hard Bone','Mucosa','Muscle','Nerve','Nerve','Salivary Gland','Skin','Soft Bone'};
 % fig = uifigure;
 % uit = uitable(fig,'Data',mahalMatrix,'ColumnName',TissueType,'RowName',TissueType);
 t = array2table(mahalMatrix)
@@ -394,8 +365,10 @@ uit.RowName = TissueType;
 % saveas(f,'MahalMatrix_AllLights_NonUniformLighting.png');
 
 %% Distance from nerve
+%{ 
 ieNewGraphWin;
 plot(mahalMatrix(:,7)); hold on;
 plot(mahalMatrix(:,8));
+%]
 
 %% END
