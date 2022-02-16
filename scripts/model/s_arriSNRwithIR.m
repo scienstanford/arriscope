@@ -188,19 +188,8 @@ xlabel('Sensor Digital Value');
 ylabel('Number of Photons/1 micron pixel/30 msec');
 %}
 
-% Digital values increase linearly with the function of number of photons
-ieNewGraphWin;
-x = Y;
-y = mRGBv;
-p = polyfit(x,y,1);
-x1 = linspace(0,7.9629e+04,100);
-% calculate digital value given number of photons
-y1 = polyval(p,x1);
-plot(x,y,'o'); hold on;
-plot(x1,y1);
-hold off;
-ylabel('Sensor Digital Value');
-xlabel('Number of Photons/1 micron pixel/30 msec');
+% make a plot that shows that Digital values increase linearly with the function of number of photons
+
 
 %% Plot SNR as function of mRGB
 % note that this figure looks different if I do not include the IR condition
