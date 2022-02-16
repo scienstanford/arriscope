@@ -62,7 +62,7 @@ nDim = 2;
 linModel = linModel(:,1:nDim);
 wgts = S*V'; wgts = wgts(1:nDim,:);
 
-ieNewGraphWin; plot(wave,linModel,'linewidth',2);; % The linModel are the N spectral basis funtions
+ieNewGraphWin; plot(wave,linModel,'linewidth',2);; % The linModel are the N spectral basis functions
 xaxisLine;
 S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for

@@ -157,6 +157,7 @@ ip = ipCreate;
 
 % Needed so that illuminant levels are not changed by sceneAdjustIlluminant
 preserveMean = false;
+
 for ii=1:nLights
 
     % Set the light

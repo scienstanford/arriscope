@@ -1,53 +1,84 @@
-%% s_arriTissueConfusionMatrix.m
+%% s_arriTissueConfusionMatrix.m 
+%
 % Purpose:
 %   Quantify the discriminability between two tissue types based on the
 %   difference in camera RGB values captured when illuminated by N lights
+
+%   We use tissue spectral reflectances that were published by Stezle et al
+%   It would interesting to repeat this analysis for tissue reflectances
+%   that have spectral measurements > 640 nm, but these data are not
+%   available. So, for now, we cannot consider the effect of IR
+%   
+%       Stelzle et al (2011)
+%       Optical Nerve Detection by Diffuse Reflectance Spectroscopy for Feedback Controlled Oral and Maxillofacial Laser Surgery. 
+%       J Transl Med 9, 20 (2011). https://doi.org/10.1186/1479-5876-9-20
+% 
+%       Stelzle et al (2012). 
+%       In Vivo Optical Tissue Differentiation by Diffuse Reflectance Spectroscopy: 
+%       Preliminary Results for Tissue-Specific Laser Surgery. Surgical innovation. 19. 10.1177/1553350611429692. 
+
+%       Stelzle et al. (2014)
+%       Optical nerve identification in head and neck surgery after Er:YAG laser ablation. 
+%        Lasers Med Sci. 2014 Sep;29(5):1641-8. doi: 10.1007/s10103-014-1569-5. Epub 2014 Apr 3. PMID: 24696381.
+
+%       see Stelzle et al (2010) for PCA
+%       Diffuse Reflectance Spectroscopy for Optical Soft Tissue Differentiation as Remote Feedback Control for 
+%       Tissue-Specific Laser Surgery. Lasers in surgery and medicine. 42. 319-25. 10.1002/lsm.20909. 
 %
 % Method:
 %   Step One: Create a scene that represents the spectral reflectance of
-%   different tissue types.  To do this, we create a spectral reflectance
-%   chart that have patches (areas) of pixels, each patch with a different
-%   reflectance for each of the 11 tissue types. We add a 12th patch just
-%   to complete the chart, but we don't use this in our analysis
-%   Note that we could (and have in the past) represented the tissues in
-%   multiple patches. 
-%   Illuminate the patches with a light that is uniformly or non-uniformly
-%   distributed over the reflectance chart
-%
-%   Step Two: Calculate the predicted RGB data for the surfaces illuminated
-%   by the different lights
-%   Do this for a case in which exposure duration is fixed (set by the
-%   maximum exposure that does not saturate the sensor with highest SNR)
-%   Also do this for the case in which auto-exposure is set - 
-%   
-%   Step Three: Calculate the Mahalanobis distance between pairs of
-%   different tissue types for the conditions we care about. 
-%   While we could calculate the Euclidean distance between pairs of
-%   tissues represented by N different sensor data values ... we choose to
-%   use the Mahalanobis distance because it takes into account covariance
-%   We first need to de-correlate the sensor data values (see explanation
-%   in the script)
-%   
+%   different tissue types.  
 
-%   Repeat and rinse
-%       Calculate the Mahalonobis distance for the conditions we care about
-%           6 lights
-%           1 light
-%           uniform, non-uniform, tissue reflectances with same mean
-%           reflectance
+%   Step Two: Create a set of spectral channels by multiplying the spectral
+%   sensitivities of the 3 RGB sensors with the spectral energy in the N
+%   spectral lights.  We have up to six lights so up to 18 channels. 
+%
+%   Step Three:  The sensor-light channels are not independent of one
+%   another.  So we reduce the sensor data to a small number of variables
+%   that preserve the independent channels.  These are virtual channels
+%   that can be described by weighted sums of the sensor light channels.
+%   Check to see if the 3 basis functions are the RGB sensors, since the
+%   lights only serve to modulate the SNR
+%
+%   Step Four: The analysis in Step Three lets us look at which spectral
+%   channels are most important for predicting the sensor values. Although
+%   we can predict the spectral responsivities of the M spectral channels
+%   by a weighted combination of M basis functions (aka principal
+%   components),we might not need all M basis functions. It could be that
+%   we need fewer basis functions. Look at how many basis functions we need
+%   to predict the spectral responsivities of the M spectral channels.
+%   Plot % variance accounted for as a function of the number of basis
+%   functions Let's say that we find that we only need B basis functions,
+%   where B<M Notice that the M weights on the B basis functions tell us
+%   how important each of the original M spectral channels are.
+%
+%   Be sure to set exposure duration to constant (we don't know what it is,
+%   but it is constant)
+%
+%   Step Five: Calculate the Mahalanobis distance between pairs of
+%   different tissue types for the conditions we care about.  These are
+%   simulations with all N = 6 lights (multispectral) and N = 1 lights (not
+%   considered multispectral).  (We calculate the Mahalanobis distance on
+%   the virtual channels).
+%
+%   Step Six: Validate the assumption that we only need B basis functions
+%   by comparing the Mahalanobis distance between tissues based on M basis
+%   functions versus the Mahalanobis distance between tissues based on B
+%   basis functions
 %
 % See also: sceneCreate, sceneReflectanceChart,
 %   sceneAdjustIlluminant, s_sceneReflectanceChartBasisFunctions
 %
-% JEF/BAW
+%
+% JEF 02/16/2022
+%{
+cd /users/joyce/GitHub/isetcam;
+addpath(genpath(pwd));
+cd /users/joyce/GitHub/arriscope;
+addpath(genpath(pwd));
+%}
 %%
-%%{
-cd /users/joyce/Github/isetcam;
-addpath(genpath(P))
-cd users/joyce/Github/arriscope;
-%]
-ieInit % clear all variables
-wave     = 400:10:640;   % Whatever is in the reflectance data file
+ieInit
 
 %% Select the number of lights
 % note that we do not include the NIR light for two reasons
@@ -56,20 +87,9 @@ wave     = 400:10:640;   % Whatever is in the reflectance data file
 % Second, we do not have reflectance data for wavelengths > 640 nm 
 % Both of these limitations can be corrected in the future
 % 
-% Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
-%     'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
-% eliminate the UV light ('violetSonyLight.mat') because there is no signal
-% in this channel
- Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
-    'blueSonyLight.mat','redSonyLight.mat'};
+Lights = {'whiteARRILight.mat',  'whiteSonyLight.mat','greenSonyLight.mat',...
+    'blueSonyLight.mat','redSonyLight.mat','violetSonyLight.mat'};
 
- % Lights = {'whiteARRILight.mat'}; % calculate for the RGB + ARRI white condition
-
-ieNewGraphWin; 
-for ii=1:numel(Lights)
-    ThisLight = ieReadSpectra(Lights{ii},wave);
-    plot(wave,ThisLight); hold on;
-end
 nLights = numel(Lights);
 
 %%  Step One: Create a scene that represents the spectral reflectance of
@@ -77,9 +97,8 @@ nLights = numel(Lights);
 
 sFiles = cell(1,1);
 sFiles{1} = which('tissueReflectances.mat');
-% sFiles{1} = which('tissueScaled.mat'); % scaled such that tissue have same mean reflectance
+% sFiles{1} = which('tissueScaled.mat');
 % [t,w, comment] = ieReadSpectra(sFiles{1},wave); plotReflectance(w,t(:,[3,7,8]));
-% [t,w, comment] = ieReadSpectra(sFiles{1},wave); ieNewGraphWin; plot(w,t,'linewidth',2);
 
 % The number of samples from each of the data sets, respectively
 sSamples{1} = repmat(1:11,1,1);    %
@@ -87,6 +106,7 @@ sSamples{1} = repmat(1:11,1,1);    %
 
 % How many row/col spatial samples in each patch (they are square)
 pSize    = 24;           % Patch size
+wave     = 400:10:640;   % Whatever is in the reflectance data file
 grayFlag = 0;            % Gray strip
 sampling = 'no replacement';
 
@@ -99,41 +119,35 @@ rPatch = chartP.rowcol(1); cPatch = chartP.rowcol(2);
 
 %% Illuminant pattern
 
-% Inhomogeneous
+% Homogeneous lighting
+pattern = [];
 
+% Inhomogeneous
 %{
 [X,Y] = meshgrid(-8:8,-10:10);
 pattern = sqrt(X.^2 + Y.^2) + 1;
 %}
 %{
 %%  This is an example of nonuniform illumination of one image
-
 fname = fullfile(icalRootPath,'local','Green_arri','green_CameraImage_10.ari');
 img = arriRead(fname,'image','left');
 % ieNewGraphWin;
 % imagescRGB(img);
-
 pattern = img(:,:,2);
-pattern = imresize(pattern,0.25);
+pattern = imresize(pattern1,0.25);
 % ieNewGraphWin; imagesc(pattern); colormap(gray);
 %}
 
-% Homogeneous lighting
-pattern = [];
-
-
-%% Step Two: Calculate the predicted RGB data 
-% for the surfaces illuminated by the different lights
-
-% Calculate an optical image (see assumptions about the optics in oiCreate;
+%% Build the oi
 oi = oiCreate;
 oi = oiCompute(oi,scene);
-oiWindow(oi);
-%% Build the sensor 
+
+%% Build the sensor - with an NIR blocking filter
 
 sensor = arriSensorCreate;
 fov    = sceneGet(scene,'fov');
 sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
+
 % For the white light the sensor is saturated at 3 ms 
 % Selected this exposure duration so that the RGB image captured under the ARRI White light would not saturate
     % sensor = sensorSet(sensor,'exp time',0.003); 
@@ -157,15 +171,15 @@ sensor = sensorSet(sensor,'auto exposure',1);
 
 %  Image Processing parameters
 ip = ipCreate;
-ipWindow(ip);
-
 
 %%  Get the sensor data from all nlights
+
 
 % Needed so that illuminant levels are not changed by sceneAdjustIlluminant
 preserveMean = false;
 
 for ii=1:nLights
+
     % Set the light
     ThisLight = ieReadSpectra(Lights{ii},wave);
     % ieNewGraphWin; plot(wave,ThisLight);
@@ -184,12 +198,10 @@ for ii=1:nLights
     sensor = sensorCompute(sensor,oi);
     sensorWindow(sensor); % plot any horizontal line in units of electrons
     % and see that the sensor does not saturate
-    ip  = ipCreate;
-    ip  = ipCompute(ip,sensor);
-    %%
-    ipWindow(ip); % why does this have NaN?
-    %%
-
+    ip     = ipCompute(ip,sensor);
+    
+    ipWindow(ip); 
+    
     if ii==1
         cp = chartCornerpoints(ip,true);
         [rects,mLocs,pSize] = chartRectangles(cp,rPatch,cPatch,0.5);
@@ -208,127 +220,106 @@ for ii=1:nLights
     
 end
 
-%% Step Three: Calculate the Mahalanobis distance between tissues 
+%% Compute the reduced dimension of the sensor data
+% By combining 3 sensors and 6 lights, we produce, in theory, 18 different spectral channels
+% However, these spectral channels are correlated (i.e. not orthogonal)
+% In order to quantify tissue discriminability using the Mahalanobis
+% distance metric, we need to map the spectral channels into an orthogonal
+% basis set.  
 
-%  We could calculate the Euclidean distance, but the Mahalanobis distance
-%  is better because it takes data covariance into
-%  account when calculating the distance between two points
 
-%  The sensor data values are not independent of one another.  
-%   We use the SVD to both decorrelate the sensor data and also to only use
-%   sensor data that accounts for most of the variance.
-%   [U, S, V] = svd(data);
-%   U is referred to as the basis set or linear model or set of principal
-%   components.  The columns of U contains the principal components
-%   The data for each tissue can then be re-expressed as data*U (de-correlated)
-%   We can use fewer basis (let's say 3), then the tissue data can be
-%   re-expressed as data*U(:,1:3) 
-
-% we take the first 11 patches which represent the 11 tissue types
-% There are multiple pixels per tissue type which is why sensorData is N x 18 
-% where N/11 is the number of pixels per tissue type and 18 are the different sensor responses
-sensorData = [];
-for ii=1:11
-    sensorData = [sensorData; data{ii}];
-end
-
-[U, S, V] = svd(sensorData','econ');
-S = diag(S);
-% plot(S)
-
-percentV = cumsum(S.^2)/sum(S.^2)* 100;
-ieNewGraphWin; plot(percentV,'k', 'linewidth', 3) ; 
-xlabel('Number of principal components'); ylabel('Percent Variance Accounted For');
-
-%% Plot the weights/channel(principal component * the spectral responsivity/channel
-fullFileName = which('FilteredAndScaledSonyQE.mat'); 
-arriQE = ieReadColorFilter(wave,fullFileName);
+% We can use the singular value decomposition to find a set of orthogonal
+% sensors such that each of the 18 channels can be described by a weighted
+% combination of the smaller set of orthogonal sensors 
+% 
 sensorLight = zeros(numel(wave),3,numel(Lights));
+arriQ = ieReadSpectra('',wave)
 for ii = 1:numel(Lights)
     thisLight = ieReadSpectra(Lights{ii},wave);
     sensorLight(:,:,ii) = diag(thisLight)*arriQE;
 end
 SpectralChannels = reshape(sensorLight,numel(wave),nLights*3);
-ieNewGraphWin;
-plot(wave,SpectralChannels);
 
-%%
-ieNewGraphWin;  
-plot(wave,SpectralChannels*U(:,1:3)*diag([-1 -1 -1]),'linewidth',3); xaxisLine;
-% plot(wave,SpectralChannels*U(:,1:3)*diag([1 1 1]),'linewidth',3); xaxisLine;
-% multiplied by -1 so that the 1st principal component is positive
-% The first principal component represents the effect of the mean tissue reflectance 
-% The second principal component is a B+G/R opponent channel where R are
-% wavelengths> 550 nm 
-% The third principal component is an R/B+G opponent channel where R are wavelengths >600 nm
-% plot(wave,-1*SpectralChannels*U(:,1:3)); xaxisLine;
+[U,S,V] = svd(SpectralChannels');
 
+% plot the percent variance accounted for as a function of number of basis functions
+S = diag(S);
+percentV = cumsum(S.^2)/sum(S.^2)* 100;
+ieNewGraphWin; plot(percentV,'k', 'linewidth', 3) ; xlabel('Number of spectral basis functions'); ylabel('Percent Variance Accounted For');
 
-%%
-% U are the weights on the spectral channels
-% 3 principal components account for 99.97% of the variance
-% The weights on the first 3 principal components 
-nBasis = 3;
-U(:,1:nBasis); % this shows the weights on each of the 18 sensors for the first 3 principal components
-% Notice that some of the sensors are given a weight of 0, even when auto-exposure is on,  indicating that
-% no matter what the exposure duration, all the tissues have the same (low) number and hence do not contribute to
-% tissue discriminability - i.e. this sensor provides no information about the different tissue types
-% The sensors that produce no useful information about the tissue types are:
-%       R sensor + 525 nm ("green") light
-%       R sensor + 445 ("blue") light
-%       G sensor + 445 ("blue") light
-%       G sensors + 638 ("red")
-%       R sensor + 404 ("uv") light
-% It is interesting to note that the G sensor + uv light could provide
-% information ... this makes sense when you look at the G sensor
+% Let's look at the weights on the 18 spectral channels to see which ones
+% are used and which ones have weights of 0
+% select the number of basis functions to use
+nBasis = 9; % for the multispectral case, 9 basis functions account for 100% of the variance
+% nBasis = 3;
 
-thisBasis = U(:,1:3);
+thisBasis = U(:,1:nBasis);
 % ieNewGraphWin; surf(abs(thisBasis));colormap(gray);
 imagesc(abs(thisBasis)); colormap(gray); set(gca,'ColorScale','log'); axis image; colorbar;
 ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
     'R Sony white', 'G Sony white', 'B Sony white', ...
     'R Sony 525nm', 'G Sony 525nm', 'B Sony 525nm', ...
     'R Sony 445nm', 'G Sony 445nm', 'B Sony 445nm', ...
-    'R Sony 638nm', 'G Sony 638nm', 'B Sony 638nm'};
+    'R Sony 638nm', 'G Sony 638nm', 'B Sony 638nm', ...
+    'R Sony 405nm', 'G Sony 405nm', 'B Sony 405nm'};
 
-t = array2table(thisBasis);
+t = array2table(abs(thisBasis))
 f=figure;
 uit = uitable(f,'Data',table2cell(t));
 uit.RowName = ChannelName;
-title('PC 5 lights spatially uniform');
 
-%% 
-% We use the svd to re-express the pixel values as a linear combination of the
-% 18 original pixel values - mapping correlated original pixel values into
-% new pixel values that are not correlated
-% original pixel values = data
-% new pixel values = data*linBasis
 
-%% Here we fill up the matrix to represent pairwise comparisons of all the tissues
-% Could loop on the 11 surfaces
-% Note that if we set nBases to 1, the distance between two different
-% tissue types is >0, i.e. we can discriminate on the basis of mean
-% reflectance
-% Nonetheless, increasing the bases does increase the distance
+%%
 
-nBases = 3;
-linBasis = U(:,1:nBases);
+%{ 
+ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
+    'R Sony white', 'G Sony white', 'B Sony white', ...
+    'R Sony 525nm', 'G Sony 525nm', 'B Sony 525nm', ...
+    'R Sony 445nm', 'G Sony 445nm', 'B Sony 445nm', ...
+    'R Sony 638nm', 'G Sony 638nm', 'B Sony 638nm', ...
+    'R Sony 405nm', 'G Sony 405nm', 'B Sony 405nm'};
+ieNewGraphWin;
+    plot(wave,x(:,1),'r--','linewidth',2); % ARRI white light R sensor
+    hold on;
+plot(wave,x(:,2),'g--','linewidth',2); % ARRI white light G sensor
+plot(wave,x(:,3),'b--','linewidth',2); % ARRI white light B sensor
+plot(wave,x(:,4),'r-','linewidth',2); % Sony white light R sensor
+plot(wave,x(:,5),'g-','linewidth',2); % Sony white light G sensor
+plot(wave,x(:,6),'b-','linewidth',2); % Sony white light B sensor
+plot(wave,x(:,7),'r-o','linewidth',2); % Sony 525nm light R sensor % Green light R sensor (noise)
+plot(wave,x(:,8),'g-o','linewidth',2); % Sony 525nm light G sensor
+plot(wave,x(:,9),'b-o','linewidth',2); % Sony 525nm light B sensor
+plot(wave,x(:,10),'r-s','linewidth',2); % Sony 445nm light R sensor % Blue light R sensor (small response)
+plot(wave,x(:,11),'g-s','linewidth',2); % Sony 445nm light G sensor % Blue light G response (small response)
+plot(wave,x(:,12),'b-s','linewidth',2); % Sony 445nm light B sensor
+plot(wave,x(:,13),'r-d','linewidth',2); % Sony 638nm light R sensor 
+plot(wave,x(:,14),'g-d','linewidth',2); % Sony 638nm light G sensor  % Red light G response
+plot(wave,x(:,15),'b-d','linewidth',2); % Sony 638nm light B sensor  % Red light B response
+plot(wave,x(:,16),'r-*','linewidth',2); % Sony 405nm light R sensor % noise
+plot(wave,x(:,17),'g-*','linewidth',2); % Sony 405nm light G sensor % noise
+plot(wave,x(:,18),'b-*','linewidth',2); % Sony 405nm light B sensor % nois
+legend(ChannelName);
+xlabel('Wavelength (nm)');
+%}
+
+%% Could loop on the 11 surfaces
+
+% Now with the new "virtual sensors" we predict the RGB values 
+
 mahalMatrix = zeros(11,11);
 for ss = 1:11
-    % This calculates the new pixel values (weights) in the response-based SVD representation.
-    % We put the new pixel values in the columns of the X matrix.
-    X = (data{ss}*linBasis);
-    for tt=(ss+1):11
-        % This is the same calculation.  We put the new pixel values for
-        % this one in the columns of Y.
-        Y = (data{tt}*linBasis);
-        
-        % Calculate the symmetric log10 mahalanobis value.
-        mahalMatrix(ss,tt) = log10(mean(mahal(X,Y)) + mean(mahal(Y,X))/2);
-        mahalMatrix(tt,ss) = mahalMatrix(ss,tt);
+    these = find(sSamples{1} == ss);
+    X = []; for tt=1:length(these), X = [X;data{these(tt)}];end
+    X = X*thisBasis;
+    for ii=ss:11
+        these = find(sSamples{1} == ii);
+        Y = []; 
+        for tt=1:length(these), Y = [Y;data{these(tt)}];end
+        Y = Y*thisBasis;
+        mahalMatrix(ss,ii) = log10(mean(mahal(X,Y)) + mean(mahal(Y,X)))/2;
+        mahalMatrix(ii,ss) = mahalMatrix(ss,ii);
     end
 end
-mahalMatrix
 
 %%
 ieNewGraphWin;
@@ -349,8 +340,8 @@ uit.RowName = TissueType;
 % saveas(f,'MahalMatrix_AllLights_NonUniformLighting.png');
 
 %% Distance from nerve
-% ieNewGraphWin;
-% plot(mahalMatrix(:,7)); hold on;
-% plot(mahalMatrix(:,8));
+ieNewGraphWin;
+plot(mahalMatrix(:,7)); hold on;
+plot(mahalMatrix(:,8));
 
 %% END

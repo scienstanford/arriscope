@@ -60,7 +60,14 @@
 % See also: sceneCreate, sceneReflectanceChart,
 %   sceneAdjustIlluminant, s_sceneReflectanceChartBasisFunctions
 %
-% JEF/BAW
+%
+% JEF 02/16/2022
+%{
+cd /users/joyce/GitHub/isetcam;
+addpath(genpath(pwd));
+cd /users/joyce/GitHub/arriscope;
+addpath(genpath(pwd));
+%}
 %%
 ieInit
 
