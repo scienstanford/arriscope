@@ -80,8 +80,8 @@ Light808 = {'irSonyLIght.mat'}
 % Lights = {'whiteARRILight.mat'};
 
 nLights = numel(Lights);
-%% Default scene
-% change this to be 
+%%  Step One: Create a scene that represents the spectral reflectance of
+%   different tissue types
 
 sFiles = cell(1,1);
 sFiles{1} = which('tissueReflectances.mat');
