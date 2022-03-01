@@ -99,9 +99,12 @@ disp('Downloaded and unzipped arri image data');
 % Notice that the raw camera image captured under violet17 has very little
 % signal and is, therefore, noisy
 
+<<<<<<< Updated upstream
 %%
 what is the difference between MacbethIROFF and MacbethIRON????
 
+=======
+>>>>>>> Stashed changes
 chdir(fullfile(arriRootPath,'data','macbethColorChecker','MacbethIROFF'));
 
 rgbImages = {'MacbethCc_blue17_fIRoff.ari','MacbethCc_green17_fIRoff.ari', ...

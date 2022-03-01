@@ -7,7 +7,7 @@
 ieInit % clear all variables
 
 % Spectral radiance of the stimuli
-wave = 400:10:700;
+wave = 400:10:900;
 
 % Load the macbeth reflectances
 surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
@@ -19,6 +19,10 @@ testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
     'redSonyLight.mat','violetSonyLight.mat',...
     'whiteSonyLight.mat','whiteARRILight.mat'};  
 
+testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
+    'redSonyLight.mat','violetSonyLight.mat',...
+    'whiteSonyLight.mat','whiteARRILight.mat'};  
+%
 % Note that in the spring of 2019, I sent the PR715 to be calibrated by PhotoResearch.
 % When it was returned, I compared the spectrophotometric measurements of the PR715 and the PF670 in our lab
 % The numbers were off by a factor of 5.

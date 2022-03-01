@@ -28,5 +28,3 @@ ieSaveSpectralFile(wave,data,comments,fullfile(pwd,outFile));
 tissue = ieReadSpectra(outFile,wave);
 plotReflectance(wave,tissue);
 
-
-    

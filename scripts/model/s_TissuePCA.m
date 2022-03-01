@@ -17,6 +17,7 @@
 %     {'Pig Skin spectral reflectance data by Stelzle et al 2012'                     }
 %     {'Pig Soft Bone spectral reflectance data published by Stelzle et al 2011'      }
 
+<<<<<<< Updated upstream
 %{
 cd /users/joyce/GitHub/isetcam/;
 addpath(genpath(pwd));
@@ -25,6 +26,9 @@ addpath(genpath(pwd));
 %}
 %%
 ieInit % clear all variables
+=======
+tissueReflectances = '/Users/joyce/Github/arriscope/data/tissue/Pig_ExVivo/tissueReflectances.mat';
+>>>>>>> Stashed changes
 wave = 400:10:640;
 tissue = ieReadSpectra('tissueReflectances.mat',wave);
 plotReflectance(wave,tissue);

@@ -25,16 +25,31 @@
 %       to non-uniform distribution of illumination
 %
 % Example:
-%   We will use the MCC surfaces to illustrate and validate the method
-%   Once we have done that, we can replace the MCC surfaces with a
-%   collection of reflectances for different tissue types.
+%   We used the MCC surfaces to illustrate and validate the method (see
+%   s_ARRImodelPredictions4MCC.m)
+%   Here we replace the MCC surfaces with the Stelzle et al published reflectances for different tissue types.
 %% 1. Selection of surface reflectances
 
-wave = 400:10:700;
+wave = 400:10:640; % unfortunately, the data only go to 640 nm
 
 % Load the macbeth reflectances
-surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
+surfaces = ieReadSpectra('tissueReflectances.mat',wave);
 plotReflectance(wave,surfaces);
+
+% Principal components analysis
+% How many principal components do we need to describe the spectral reflectances?
+% nDim = 6;
+% nDim = 1; % Let's try 1
+nDim = 2; % Let's try 2 
+% If we only need two principal components to predict tissue reflectances,
+% then how many sensors do we need to estimate the weights on the principal components ?
+% nDim = 4; 
+[linModel,S,V] = svd(surfaces);
+linModel = linModel(:,1:nDim);
+plotReflectance(wave,linModel); % The linModel are the N spectral basis funtions
+xaxisLine;
+S = diag(S);
+percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
 
 %% 2. Predicted Sensor values -
 % read in the sensor QE and multiply by the lights to get 18 sensors
@@ -48,6 +63,12 @@ plotRadiance(wave,arriQE,'title','ARRI sensor quantum efficiency');
 testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
     'redSonyLight.mat','violetSonyLight.mat',...
     'whiteSonyLight.mat','whiteARRILight.mat'};
+
+% Consider using fewer lights and see how this affects our ability to
+% predict tissue reflectances
+%{
+testLights = {'whiteARRILight.mat'};
+%}
 
 sensor = zeros(length(wave),numel(testLights)*3);
 kk = 0;
@@ -64,15 +85,7 @@ plotRadiance(wave,sensor,'title','ARRI QE * Light Spectral Energy');
 
 % Predict sensor values for reflectances
 predSensorValues = sensor' * surfaces;
-
-%% 3. Principal components analysis
-nDim = 6;
-[linModel,S,V] = svd(surfaces);
-linModel = linModel(:,1:nDim);
-plotReflectance(wave,linModel); % The linModel are the N spectral basis funtions
-xaxisLine;
-S = diag(S);
-percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
+numel(predSensorValues)
 
 %% 4. Find a N x B matrix that maps N sensor values into B weights 
 % Find the weights that are the LS solution to
@@ -88,32 +101,33 @@ predLowDim = sensor'*linModel*wgts; % replace surfaces with a low dimensional mo
 % There is a loss of information mapping the surfaces (31 wavelengths x 24 surfaces) onto the sensors (31x18) 
 % Note also that some of the sensors cannot detect the surface spectral energy, so they don't matter
 
+% This is how well we can predict the sensor values, given reduced representation of the tissue reflectances
+ieNewGraphWin;
 scatter(predLowDim(:),predSensorValues(:));
 identityLine; grid on; xlabel('Sensor values predicted by the full linear model');ylabel('Sensor values predicted by reduced dim');
+title(['Number of Dimensions = ',num2str(nDim)]);
 
 
 %%  5.  Predicted reflectance comparisons
 
-% If we want to PREDICT 18 sensor values (RGB under 18 lights) for the 24
-% color patches, we only need to represent the spectral reflectances of the
-% 24 color patches using 3 principal components. (see above at how well we
-% can predict the 18 sensor values when DIM = 3)
+% Unlike the MCC, which require 6 spectral basis functions to
+% represent the 24 surface reflectances (see s_ARRImodelPredictions4MCC.m)
+% we only need 2 spectral basis functions to represent the 11 different
+% tissue types provided by Stelzle et al 
 
-% However, if we want to PREDICT spectral reflectances of each of the 24
-% color patches, given the 18 sensor values, we need to represent the
-% spectral reflectances of the 24 color patches using 6 principal
-% components.
+% The question we can ask, however, is how many spectral lights (spectral
+% channels) do we need in order to predict the weights on the 2 spectral
+% basis functions.  
+% Do we do as well with 1 light as with 6 lights?
+% To determine this, rerun the analysis using nDim = 2, but 1 light
+% compare this to the case where nDim = 2, but 6 lights
+% Note that 1 light (ARRIlight) does as well as 6 lights 
+% Note, however, that this is for the fixed exposure condition 
 
-% When we map surfaces onto sensors, we lose information. 
-% We can remove a lot of information that the sensors don't see
-% You can see this by setting NDIM to 3 -using only 3 spectral basis
-% functions to represent the MCC surfaces will do as well as using 6
-% spectral basis functions.
-
-% However, when we go the other direction, from sensors to surfaces, we
-% need more than 3 spectral basis functions to represent the surfaces 
-% Hence the assymetry in the ability to predict sensor responses, given
-% surfaces and the ability to predict surfaces, given sensor responses
+% This is how well we can predict the spectral reflectances given N sensor
+% values
+% N = 33 for 1 light and 11 surfaces
+% N = 198 for 6 lights and 11 surfaces
 
 plotReflectance(wave,surfaces);
 hold on;
@@ -127,44 +141,6 @@ identityLine; grid on; xlabel('reflectance');ylabel('predicted reflectance');
 
 %% Get the real sensor values and compare to the predicted sensor values
 %  We can only do this for the MCC, because we have both the spectral
-%  reflectance and the ARRI RGB values for the 24 surfaces 
-% Display the raw camera images captured by the ARRIScope camera with the
-% NIR filter on for each of the 6 lights
-% Then grab the mean R, G and B values for each of the 24 patches captured
-% under each of the 6 lights
-% Notice that the raw camera image captured under violet17 has very little
-% signal and is, therefore, noisy
-
-chdir(fullfile(arriRootPath,'data','macbethColorChecker','MacbethIRON'));
-
-rgbImages = {'MacbethCc_blue17_fIRon.ari','MacbethCc_green17_fIRon.ari', ...
-    'MacbethCc_red17_fIRon.ari', 'MacbethCc_violet17_fIRon.ari', ...
-    'MacbethCc_white17_fIRon.ari','MacbethCc_arriwhite20_fIRon.ari'};
-
-ip = ipCreate;
-ip = ipSet(ip,'correction method illuminant','none');
-ip = ipSet(ip,'conversion method sensor','none');
-
-showSelection = true;   % Do or do not bring up the window
-fullData      = false;  % Just returns the mean in each patch
-cornerPoints = [
-    79   291;
-   490   292;
-   489    19;
-    79    22];
-
-mRGB = [];
-for ii=1:numel(rgbImages)
-    img = arriRead(rgbImages{ii},'image','left');
-    img = imresize(img,1/4);
-    ip  = ipSet(ip,'result',img); 
-    thisRGB = macbethSelect(ip,showSelection,fullData,cornerPoints);
-    mRGB = [mRGB; thisRGB'];
-end
-
-ieNewGraphWin;
-% we need to normalize the sensor values, since the scales are different
-scatter(mRGB(:)/max(mRGB(:)),predSensorValues(:)/max(predSensorValues(:)));
-identityLine; grid on; xlabel('Real sensor values');ylabel('Sensor values predicted by the full linear model');
+%  reflectance and the ARRI RGB values for the 24 surfaces (see s_ARRImodelPredictions4MCC.m) 
 
 

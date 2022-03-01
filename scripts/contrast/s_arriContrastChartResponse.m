@@ -130,7 +130,7 @@ fov    = sceneGet(scene,'fov');
 sensor = sensorSetSizeToFOV(sensor,[sceneGet(scene,'hfov'),sceneGet(scene,'vfov')],oi);
 % For the white light the sensor is saturated at 3 ms 
 % Selected this exposure duration so that the RGB image captured under the ARRI White light would not saturate
-    % sensor = sensorSet(sensor,'exp time',0.003); 
+    % sensor = sensorSet(sensor,'exp time',0.003); % fixed exposure
     % sensor = sensorSet(sensor,'exp time',0.035); % Exposure for the scaled tissue
     % sensor = sensorSet(sensor,'exp time',0.0003); % Exposure for non-uniform illumination
 % Set auto-exposure
@@ -245,8 +245,10 @@ SpectralChannels = reshape(sensorLight,numel(wave),nLights*3);
 ieNewGraphWin;
 plot(wave,SpectralChannels);
 
-%%
-ieNewGraphWin;  
+%% Multiple the weights per channel by the spectral sensitivity of the channel
+% ieNewGraphWin;  plot(wave,SpectralChannels,'linewidth',3);
+%Multiple the weights per channel by the spectral sensitivity of the channel
+ieNewGraphWin;
 plot(wave,SpectralChannels*U(:,1:3)*diag([-1 -1 -1]),'linewidth',3); xaxisLine;
 % plot(wave,SpectralChannels*U(:,1:3)*diag([1 1 1]),'linewidth',3); xaxisLine;
 % multiplied by -1 so that the 1st principal component is positive
@@ -277,7 +279,8 @@ U(:,1:nBasis); % this shows the weights on each of the 18 sensors for the first 
 
 thisBasis = U(:,1:3);
 % ieNewGraphWin; surf(abs(thisBasis));colormap(gray);
-imagesc(abs(thisBasis)); colormap(gray); set(gca,'ColorScale','log'); axis image; colorbar;
+% imagesc(abs(thisBasis)); colormap(gray); set(gca,'ColorScale','log'); axis image; colorbar;
+imagesc(abs(thisBasis)); colormap(gray);  axis image; colorbar;
 ChannelName = {'R ARRI white','G ARRI white','B ARRI white', ...
     'R Sony white', 'G Sony white', 'B Sony white', ...
     'R Sony 525nm', 'G Sony 525nm', 'B Sony 525nm', ...
