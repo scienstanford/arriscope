@@ -3,6 +3,7 @@
 
 % ScholsTissueReflectances.mat
 % WisotzkyTissueReflectances.mat
+% HendriksTissueReflectances.mat
 
 %% 
 ieInit % clear all variables
@@ -88,3 +89,45 @@ ieNewGraphWin; plot(wave,tissue,'linewidth',2);
 hold on;
 plot(wave,predReflectance,'--','linewidth',2);
 hold off
+
+%%
+% Hendriks BH, Balthasar AJ, Lucassen GW, van der Voort M, Mueller M, Pully VV, Bydlon TM, Reich C, van Keersop AT, Kortsmit J, Langhout GC, van Geffen GJ. 
+% Nerve detection with optical spectroscopy for regional anesthesia procedures.
+% J Transl Med. 2015 Dec 15;13:380. doi: 10.1186/s12967-015-0739-y;
+
+wave = 400:10:1800; % the spectra are scaled such mean reflectance is removed 
+% 6 spectral samples, first 3 principle components account for 
+tissue = ieReadSpectra('HendriksTissueReflectances.mat',wave);
+plotReflectance(wave,tissue);
+
+% Principal components analysis 
+nDim = 3;
+
+% tissue = U * S * V'
+% U = Linear Model
+% wgts = S*V'
+% If you reduce the dimension, then
+% We will put all this in Zheng's function
+
+[linModel,S,V] = svd(tissue);
+linModel = linModel(:,1:nDim);
+wgts = S*V'; wgts = wgts(1:nDim,:);
+
+ieNewGraphWin; plot(wave,linModel,'linewidth',2); % The linModel are the N spectral basis funtions
+xaxisLine;
+S = diag(S);
+percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
+
+% Plot the percent variance accounted for as a function of the number of basis functions
+ieNewGraphWin; plot(percentV* 100,'k','linewidth',3); 
+xlabel('Number of principal component');
+ylabel('Percent Variance Accounted For');
+
+% Plot measured and estimated tissue reflectance
+predReflectance = linModel*wgts;
+ieNewGraphWin; plot(wave,tissue,'linewidth',2);
+hold on;
+plot(wave,predReflectance,'--','linewidth',2);
+hold off
+
+
