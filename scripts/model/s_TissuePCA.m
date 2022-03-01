@@ -1,9 +1,9 @@
 
 % s_TissuePCA
-ieInit % clear all variables
+
 
 % Calculate the principal components with and without the mean removed
-% Plot predicted and measured reflectances
+% Plot predicted and measured reflectance
 
 %    {'Pig Cancellous Bone spectral reflectance data published by Stelzle et al 2014'}
 %     {'Pig Cortical Bone spectral reflectance data published by Stelzle et al 2014'  }
@@ -17,7 +17,14 @@ ieInit % clear all variables
 %     {'Pig Skin spectral reflectance data by Stelzle et al 2012'                     }
 %     {'Pig Soft Bone spectral reflectance data published by Stelzle et al 2011'      }
 
-
+%{
+cd /users/joyce/GitHub/isetcam/;
+addpath(genpath(pwd));
+cd /users/joyce/GitHub/arriscope/;
+addpath(genpath(pwd));
+%}
+%%
+ieInit % clear all variables
 wave = 400:10:640;
 tissue = ieReadSpectra('tissueReflectances.mat',wave);
 plotReflectance(wave,tissue);
@@ -50,7 +57,7 @@ title('Scaled by Max');
 %}
 
 %% Principal components analysis 
-nDim = 2;
+nDim = 4;
 
 % tissue = U * S * V'
 % U = Linear Model
@@ -68,9 +75,11 @@ S = diag(S);
 percentV = cumsum(S.^2)/sum(S.^2); % check to see if this is the right calculation for percent variance accounted for
 
 % Plot the percent variance accounted for as a function of the number of basis functions
-ieNewGraphWin; plot(percentV,'k','linewidth',3); 
-xlabel('Number of principal component');
-ylabel('Percent Variance Accounted For');
+ieNewGraphWin; plot(percentV* 100,'k','linewidth',3); 
+xlabel('Number of principal components');
+ylabel('Percent Variance');
+ax = gca;
+ax.FontSize=16;
 
 % Plot measured and estimated tissue reflectance
 predReflectance = linModel*wgts;
