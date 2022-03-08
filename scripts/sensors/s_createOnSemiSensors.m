@@ -180,6 +180,22 @@ for ii=1:3
     hold on;
 end
 identityLine;
-xlabel('RGB values predicted by the scaled and Filtered Sony QE');
+xlabel('RGB values predicted by the Equivalent Sensor Model');
 ylabel('RGB values measured by ARRI sensors');
 
+%% Create figures
+% perhaps select a different ON Semiconductor Sensor
+
+wave = 400:10:900;
+
+SensorFname = fullfile(arriRootPath,'data','sensor','ScaledOnSemi.mat');
+ScaledOnSemi = ieReadSpectra(SensorFname, wave);
+
+SensorFname = fullfile(arriRootPath,'data','sensor','ScaledAndFilteredOnSemi.mat');
+ScaledAndFilteredOnSemi = ieReadSpectra(SensorFname, wave);
+
+
+ieNewGraphWin;
+plot(wave,ScaledOnSemi(:,1),'r'); hold on;
+plot(wave,ScaledOnSemi(:,2),'g');
+plot(wave,ScaledOnSemi(:,3),'b');
