@@ -7,8 +7,7 @@
 ieInit % clear all variables
 
 % Spectral radiance of the stimuli
-wave = 400:10:900;
-
+wave = 400:10:700; 
 % Load the macbeth reflectances
 surfaces = ieReadSpectra('MiniatureMacbethChart.mat',wave);
 plotRadiance(wave,surfaces);
@@ -22,21 +21,6 @@ testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
 testLights = {'blueSonyLight.mat','greenSonyLight.mat',...
     'redSonyLight.mat','violetSonyLight.mat',...
     'whiteSonyLight.mat','whiteARRILight.mat'};  
-%
-% Note that in the spring of 2019, I sent the PR715 to be calibrated by PhotoResearch.
-% When it was returned, I compared the spectrophotometric measurements of the PR715 and the PF670 in our lab
-% The numbers were off by a factor of 5.
-% So I compared the PR670 measurements with a second PR670 that
-% PhotoResearch insisted was calibrated. Since these two units gave the
-% same number, I deduced that the PR 715 was not calibrated correctly.
-% I argued with PhotoResearch for over a year about this, refusing to pay
-% their bill for an incorrect calibration. 
-% After I told them that I would publish my results on the web, they
-% relented and told me to send the PR715 back for recalibration.
-% In the meantime, we need to correct the PR715 in order to get numbers
-% that are on the same scale as the PR670.
-% Hence, this long explanation and the empirical correction below to get
-% the numbers right (jf)
 
 
 ieNewGraphWin;

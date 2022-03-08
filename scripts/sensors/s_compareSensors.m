@@ -97,9 +97,10 @@ plot(wave,arriQE(:,2),'g');
 plot(wave,arriQE(:,3),'b'); 
 
 %%
+ieNewGraphWin;
 
 arriQE_NIRoff_r_scaled = ieScale(arriQE_NIRoff(:,1))*max(arriQE(:,1))
-plot(wave, arriQE_NIRoff_r_scaled,'r--'); 
+plot(wave, arriQE_NIRoff_r_scaled,'r--'); holdon;
 
 arriQE_NIRoff_g_scaled = ieScale(arriQE_NIRoff(:,2))*max(arriQE(:,2))
 plot(wave, arriQE_NIRoff_g_scaled,'g--');

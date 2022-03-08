@@ -15,12 +15,12 @@
 %   We would like to have this estimate so that we can predict the
 %   ARRIScope RGB values for spectral reflectances > 700 nm
 %
-%   We pick the QE functions for a Sony sensor that is popular and very
-%   much like the spectral QE functions for a OnSemi sensor
+%   We pick the QE functions for an On Semiconductor sensor (company makes
+%   sensor for ARRIScope)
 %   We first scale it so that the gains match the sensor QE functions we
 %   estimated for the ARRIscope (based on 24 patches illuminated by 6
 %   lights)
-%   Then, we apply an NIR blokcing filter that produces QE functions
+%   Then, we apply an NIR blocking filter that produces QE functions
 %   similar to the estimated sensors
 %   Then we determine how well this scaled and filtered QE function (again,
 %   derived from published QE functions for a Sony sensor) predict the ARRIscope 
@@ -59,10 +59,10 @@ ieSaveSpectralFile(wavelength,data,comment);
 %%  load in sensors 
 % see s_arriSensorEstimation) for details about how ARRIestimatedSensors was calculated
 
-SonyIMX249SensorFname = fullfile(arriRootPath,'data','sensor','SonyIMX249.mat');
-SonyIMX249 = ieReadSpectra(SonyIMX249SensorFname, wave);
-ARRIestimatedFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
-arriQE = ieReadSpectra(ARRIestimatedFname, wave);
+% SonyIMX249SensorFname = fullfile(arriRootPath,'data','sensor','SonyIMX249.mat');
+% SonyIMX249 = ieReadSpectra(SonyIMX249SensorFname, wave);
+% ARRIestimatedFname = fullfile(arriRootPath,'data','sensor','ARRIestimatedSensors.mat');
+% arriQE = ieReadSpectra(ARRIestimatedFname, wave);
  
 
 %% Scale the RGB gains of the Sony QE to match the RGB gains of the estimated sensor
