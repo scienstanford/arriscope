@@ -73,15 +73,10 @@ ieNewGraphWin;
 TLCI_QE_red = TLCIQE(:,1)/max(TLCIQE(:,1))* max(sensorQE(:,1));
 TLCI_QE_green = TLCIQE(:,2)/max(TLCIQE(:,2))* max(sensorQE(:,2));
 TLCI_QE_blue = TLCIQE(:,3)/max(TLCIQE(:,3))* max(sensorQE(:,3));
-plot(wave,TLCI_QE_red,'r','LineWidth',2); hold on
+plot(wave,TLCI_QE_red,'r'); hold on
 plot(wave,TLCI_QE_green,'g','LineWidth',2);
-plot(wave,TLCI_QE_blue,'b','LineWidth',2);
+plot(wave,TLCI_QE_blue,'b');
 TLCIsensor = [TLCI_QE_red,TLCI_QE_green,TLCI_QE_blue];
-ax = gca;
-ax.FontSize=16;
-grid on;
-xlabel('Wavelength (nm)','FontSize',20);
-ylabel('Relative Sensitivity','FontSize',20);
 
 % plot predictions and compare to measurements
 ieNewGraphWin;
@@ -114,6 +109,7 @@ grid on;
 xlabel('Wavelength (nm)','FontSize',20);
 ylabel('Relative Sensitivity','FontSize',20);
 
+
 % plot predictions and compare to measurements
 ieNewGraphWin;
 estimatedFiltersRGB = equivalentSensor'*radiance;
@@ -145,5 +141,3 @@ ax.FontSize=16;
 grid on;
 xlabel('Wavelength (nm)','FontSize',20);
 ylabel('Relative Sensitivity','FontSize',20);
-
-
