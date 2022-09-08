@@ -64,7 +64,7 @@ IRLight = ieReadSpectra('irSonyLIght.mat',wave);
 IRsensorLight(:,:) = diag(IRLight)* arriQE;
 
 %% create sensorLight to be 51x21 matrix
-sensorLight(:,:,7) = IRsensorLight;
+sensorLight(:,:,7) = IRsensorLight;  % add in the condition where the sensor with no IR blocking filter is combined with 808 light
 %% First, plot the lights
 ieNewGraphWin;
 for ii = 1:numel(testLights)
@@ -88,39 +88,45 @@ plot(wave,arriQEwithNIR(:,3),'b--'); hold on;
 
 %% Third, plot sensor * light
 ieNewGraphWin;
-plot(wave,sensorLight(:,1,1),'r');hold on;
-plot(wave,sensorLight(:,2,1),'g');
-plot(wave,sensorLight(:,3,1),'b');
-plot(wave,sensorLight(:,1,2),'r')
-plot(wave,sensorLight(:,2,2),'g')
-plot(wave,sensorLight(:,3,2),'b')
-plot(wave,sensorLight(:,1,3),'r');
-plot(wave,sensorLight(:,2,3),'g');
-plot(wave,sensorLight(:,3,3),'b');
-plot(wave,sensorLight(:,1,4),'r')
-plot(wave,sensorLight(:,2,4),'g')
-plot(wave,sensorLight(:,3,4),'b')
-plot(wave,sensorLight(:,1,5),'r');
-plot(wave,sensorLight(:,2,5),'g');
-plot(wave,sensorLight(:,3,5),'b');
-plot(wave,sensorLight(:,1,6),'r')
-plot(wave,sensorLight(:,2,6),'g')
-plot(wave,sensorLight(:,3,6),'b')
-plot(wave,sensorLight(:,1,6),'r')
-plot(wave,sensorLight(:,2,6),'g')
-plot(wave,sensorLight(:,3,6),'b')
-plot(wave,sensorLight(:,1,7),'r--'); 
-plot(wave,sensorLight(:,2,7),'g--')
-plot(wave,sensorLight(:,3,7),'b--')
+plot(wave,sensorLight(:,1,1),'r','LineWidth',2);hold on;
+plot(wave,sensorLight(:,2,1),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,1),'b','LineWidth',2); % B channels with ARRIwhite light should have high SNR
+plot(wave,sensorLight(:,1,2),'r','LineWidth',2)
+plot(wave,sensorLight(:,2,2),'g','LineWidth',2)
+plot(wave,sensorLight(:,3,2),'b','LineWidth',2)
+plot(wave,sensorLight(:,1,3),'r','LineWidth',2);
+plot(wave,sensorLight(:,2,3),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,3),'b','LineWidth',2);
+plot(wave,sensorLight(:,1,4),'r','LineWidth',2);
+plot(wave,sensorLight(:,2,4),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,4),'b','LineWidth',2);
+plot(wave,sensorLight(:,1,5),'r','LineWidth',2);
+plot(wave,sensorLight(:,2,5),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,5),'b','LineWidth',2);
+plot(wave,sensorLight(:,1,6),'r','LineWidth',2);
+plot(wave,sensorLight(:,2,6),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,6),'b','LineWidth',2);
+plot(wave,sensorLight(:,1,6),'r','LineWidth',2);
+plot(wave,sensorLight(:,2,6),'g','LineWidth',2);
+plot(wave,sensorLight(:,3,6),'b','LineWidth',2);
+plot(wave,sensorLight(:,1,7),'r--','LineWidth',2); 
+plot(wave,sensorLight(:,2,7),'g--','LineWidth',2);
+plot(wave,sensorLight(:,3,7),'b--','LineWidth',2);
+
+ax = gca;
+ax.FontSize=14;
+grid on;
+xlabel('Wavelength (nm)','FontSize',16);
+ylabel('Light Energy * Sensor Sensitivity (quanta/nm/sec/sr/m^2)','FontSize',16);
 
 %% convert radiance to quanta
 x=reshape(sensorLight,51,21);
 Xphotons = Energy2Quanta(wave,x);
 Y = sum(Xphotons); %per square meter/sec
 Y = Y*1.0e-12; % per square micron/sec (assuming a 1 micron pixel)
-Y = Y * 0.030 % per square micron in 30 msecs
+Y = Y * 0.030; % per square micron in 30 msecs
 SNR = Y./(Y.^0.5); % mean divided by the sqrt of the mean = SNR assuming poisson distribution - i.e. photon noise
-SNRdb = 20 * log10(SNR);
+SNRdb = 20 * log10(SNR)
 
 % Integrate the energy per channel - reolaced with SNR calculation above
 % only for documentation purposes
