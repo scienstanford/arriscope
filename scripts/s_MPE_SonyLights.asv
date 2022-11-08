@@ -117,15 +117,11 @@ for ii = 1:7
  fprintf('Energy level for 10 second exposure:  %f \n',exposureLevel(:,ii))
 end
 
-% MPE = 20000 * exposureTime^0.25;
+MPE = 20000 * exposureTime^0.25;
 for ii = 1:7
  fprintf('MPE is greater by a factor of %f \n',MPE/exposureLevel(:,ii))
 end
 
-figure;
-for ii = 1:7
-    plot(wave,irradiance(:,ii)); hold on; pause;
-end
 
 %% compare lights 
 % The intensity of the lights were chosen to be much lower than the lights
